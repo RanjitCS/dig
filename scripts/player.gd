@@ -89,11 +89,16 @@ func _physics_process(delta: float) -> void:
 func _try_dig() -> void:
 	var world := get_parent()
 	if world == null or not world.has_method("try_dig_at"):
+		print("[player] dig: no world parent (parent=", get_parent(), ")")
 		return
+	print("[player] dig: player.pos=", global_position, " facing=", _facing)
 	# Try candidates in priority order; first one with a block wins.
 	for target in _dig_candidates():
-		if world.try_dig_at(target):
+		var ok: bool = world.try_dig_at(target)
+		print("  -> target=", target, " ok=", ok)
+		if ok:
 			return
+	print("  (no candidate succeeded)")
 
 func _dig_candidates() -> Array:
 	var world := get_parent()

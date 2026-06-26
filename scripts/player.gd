@@ -89,16 +89,18 @@ func _physics_process(delta: float) -> void:
 func _try_dig() -> void:
 	var world := get_parent()
 	if world == null or not world.has_method("try_dig_at"):
-		print("[player] dig: no world (parent=", get_parent(), ")")
+		Logger.warn("player.dig: no world parent (parent=%s)" % str(get_parent()))
 		return
-	print("[player] dig pos=", global_position, " facing=", _facing,
-		" down=", Input.is_action_pressed("move_down"),
-		" up=", Input.is_action_pressed("move_up"))
+	Logger.debug("player.dig pos=%s facing=%d down=%s up=%s" % [
+		str(global_position), _facing,
+		str(Input.is_action_pressed("move_down")),
+		str(Input.is_action_pressed("move_up")),
+	])
 	var candidates := _dig_candidates()
-	print("  candidates: ", candidates)
+	Logger.debug("  candidates: %s" % str(candidates))
 	for target in candidates:
 		var ok: bool = world.try_dig_at(target)
-		print("    target=", target, " ok=", ok)
+		Logger.debug("    target=%s ok=%s" % [str(target), str(ok)])
 		if ok:
 			return
 

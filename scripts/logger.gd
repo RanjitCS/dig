@@ -45,16 +45,16 @@ func _write(level: int, msg: String) -> void:
 		_file.store_line(line)
 		_file.flush()
 
-func debug(msg: String) -> void:
+func dbg(msg: String) -> void:
 	_write(Level.DEBUG, msg)
 
-func info(msg: String) -> void:
+func inf(msg: String) -> void:
 	_write(Level.INFO, msg)
 
-func warn(msg: String) -> void:
+func wrn(msg: String) -> void:
 	_write(Level.WARN, msg)
 
-func error(msg: String) -> void:
+func err(msg: String) -> void:
 	_write(Level.ERROR, msg)
 
 func path() -> String:

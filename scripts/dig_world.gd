@@ -165,12 +165,11 @@ func try_dig_at(grid_pos: Vector2i) -> bool:
 		return false
 	var block: DigBlock = blocks_by_pos.get(grid_pos, null)
 	if block == null:
-		print("[world] try_dig_at(", grid_pos, "): no block. known nearby: ",
-			[Vector2i(grid_pos.x, grid_pos.y - 1), Vector2i(grid_pos.x, grid_pos.y + 1),
-			 Vector2i(grid_pos.x - 1, grid_pos.y), Vector2i(grid_pos.x + 1, grid_pos.y)].map(
-				func(p: Vector2i) -> String:
-					return "%s=%s" % [str(p), "yes" if blocks_by_pos.has(p) else "no"]
-			))
+		var neighbors: Array = []
+		for o in [Vector2i(0, -1), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(1, 0)]:
+			var p: Vector2i = grid_pos + o
+			neighbors.append("%s=%s" % [str(p), "yes" if blocks_by_pos.has(p) else "no"])
+		print("[world] try_dig_at(", grid_pos, "): no block. neighbors: ", neighbors)
 		return false
 	block.hit_once()
 	return true

@@ -60,7 +60,7 @@ func _update_crack() -> void:
 	crack_label.text = "%d" % hits_remaining
 
 func _flash() -> void:
-	var target := sprite if sprite.visible else fallback_rect
+	var target: CanvasItem = sprite if sprite.visible else fallback_rect
 	target.modulate = Color(1.4, 1.4, 1.4)
 	var tw := create_tween()
 	tw.tween_property(target, "modulate", Color(1, 1, 1), 0.12)

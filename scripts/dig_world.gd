@@ -163,20 +163,20 @@ func _on_block_click_requested(block: DigBlock) -> void:
 # Bypasses the click-reach rules since physical proximity is the new reach.
 func try_dig_at(grid_pos: Vector2i) -> bool:
 	if GameState.day_paused:
-		Logger.dbg("world.try_dig refused: day_paused")
+		print("world.try_dig refused: day_paused")
 		return false
 	if GameState.backpack_full():
-		Logger.dbg("world.try_dig refused: backpack full (%.1f/%.1f)" % [GameState.dirt, GameState.backpack_capacity()])
+		print("world.try_dig refused: backpack full (%.1f/%.1f)" % [GameState.dirt, GameState.backpack_capacity()])
 		return false
 	var block: DigBlock = blocks_by_pos.get(grid_pos, null)
 	if block == null:
-		Logger.dbg("world.try_dig refused: no block at %s" % str(grid_pos))
+		print("world.try_dig refused: no block at %s" % str(grid_pos))
 		return false
 	if block.block_type and block.block_type.indestructible:
-		Logger.dbg("world.try_dig: block at %s is INDESTRUCTIBLE (%s) — returning false" % [str(grid_pos), str(block.block_type.id)])
+		print("world.try_dig: block at %s is INDESTRUCTIBLE (%s) — returning false" % [str(grid_pos), str(block.block_type.id)])
 		block.hit_once()
 		return false
-	Logger.dbg("world.try_dig hit: pos=%s type=%s hits_remaining=%d" % [str(grid_pos), str(block.block_type.id), block.hits_remaining])
+	print("world.try_dig hit: pos=%s type=%s hits_remaining=%d" % [str(grid_pos), str(block.block_type.id), block.hits_remaining])
 	block.hit_once()
 	return true
 
@@ -213,7 +213,7 @@ func _remove_block(block: DigBlock, award_yields: bool) -> void:
 	block.queue_free()
 
 func _on_block_broken(block: DigBlock) -> void:
-	Logger.inf("block broken: pos=%s type=%s" % [str(block.grid_pos), str(block.block_type.id)])
+	print("block broken: pos=%s type=%s" % [str(block.grid_pos), str(block.block_type.id)])
 	_remove_block(block, true)
 
 func _award_yields_for(type: BlockType) -> void:
@@ -224,7 +224,7 @@ func _award_yields_for(type: BlockType) -> void:
 	var money_mult := 1.0 + GameState._sum_effect(Upgrade.Effect.CLICK_MONEY_MULT)
 	var dirt_amt: float = type.dirt_yield * crit
 	var money_amt: float = type.money_yield * crit * money_mult
-	Logger.inf("yield awarded: type=%s dirt=%.2f money=%.2f (crit=%.1fx money_mult=%.2f)" % [
+	print("yield awarded: type=%s dirt=%.2f money=%.2f (crit=%.1fx money_mult=%.2f)" % [
 		str(type.id), dirt_amt, money_amt, crit, money_mult
 	])
 	GameState._add_dirt(dirt_amt)

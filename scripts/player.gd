@@ -84,14 +84,20 @@ func _physics_process(delta: float) -> void:
 
 	# --- dig action ---
 	if Input.is_action_just_pressed("dig"):
+		print("[player] dig pressed at ", global_position, " facing=", _facing)
 		_try_dig()
 
 func _try_dig() -> void:
 	var world := get_parent()
-	if world == null or not world.has_method("try_dig_at"):
+	if world == null:
+		print("[player] no parent")
+		return
+	if not world.has_method("try_dig_at"):
+		print("[player] parent ", world.name, " has no try_dig_at")
 		return
 	var target := _dig_target_grid()
-	world.try_dig_at(target)
+	var ok: bool = world.try_dig_at(target)
+	print("[player] dig target=", target, " ok=", ok)
 
 func _dig_target_grid() -> Vector2i:
 	# Pick a grid cell adjacent to the player based on input direction.

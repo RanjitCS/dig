@@ -26,17 +26,20 @@ follow_focus = true
 custom_minimum_size = Vector2(576, 0)
 layout_mode = 2
 size_flags_horizontal = 4
+mouse_filter = 1
 theme_override_constants/separation = 0
 
 [node name="Surface" type="ColorRect" parent="Scroller/Inner"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(576, 96)
 layout_mode = 2
+mouse_filter = 2
 color = Color(0.18, 0.32, 0.18, 1)
 
 [node name="SurfaceLine" type="ColorRect" parent="Scroller/Inner"]
 custom_minimum_size = Vector2(576, 4)
 layout_mode = 2
+mouse_filter = 2
 color = Color(0.05, 0.04, 0.03, 1)
 
 [node name="Grid" type="Control" parent="Scroller/Inner"]
@@ -44,3 +47,4 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(576, 1440)
 layout_mode = 2
 size_flags_horizontal = 4
+mouse_filter = 1

@@ -1,6 +1,10 @@
-[gd_scene load_steps=2 format=3 uid="uid://dig0scene0digworld"]
+[gd_scene load_steps=4 format=3 uid="uid://dig0scene0digworld"]
 
 [ext_resource type="Script" path="res://scripts/dig_world.gd" id="1_digworld"]
+[ext_resource type="PackedScene" uid="uid://dig0scene0player" path="res://scenes/player.tscn" id="2_player"]
+
+[sub_resource type="RectangleShape2D" id="SurfaceFloorShape"]
+size = Vector2(4000, 4)
 
 [node name="DigWorld" type="Node2D"]
 script = ExtResource("1_digworld")
@@ -23,6 +27,12 @@ offset_bottom = 0.0
 color = Color(0.22, 0.4, 0.22, 1)
 mouse_filter = 2
 
+[node name="SurfaceFloor" type="StaticBody2D" parent="Surface"]
+position = Vector2(0, -2)
+
+[node name="SurfaceFloorShape" type="CollisionShape2D" parent="Surface/SurfaceFloor"]
+shape = SubResource("SurfaceFloorShape")
+
 [node name="SurfaceLine" type="ColorRect" parent="Surface"]
 offset_left = -2000.0
 offset_top = -4.0
@@ -33,6 +43,9 @@ mouse_filter = 2
 
 [node name="Grid" type="Node2D" parent="."]
 
-[node name="Camera2D" type="Camera2D" parent="."]
+[node name="Player" parent="." instance=ExtResource("2_player")]
+position = Vector2(288, -40)
+
+[node name="Camera2D" type="Camera2D" parent="Player"]
 position_smoothing_enabled = true
 position_smoothing_speed = 6.0

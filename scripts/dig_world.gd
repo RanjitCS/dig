@@ -9,7 +9,7 @@ const SURFACE_HEIGHT_PX: float = 96.0
 
 @onready var surface_visual: Node2D = $Surface
 @onready var grid_root: Node2D = $Grid
-@onready var camera: Camera2D = $Camera2D
+@onready var player: Player = $Player
 
 var block_types: Array[BlockType] = []
 var rng := RandomNumberGenerator.new()
@@ -24,9 +24,17 @@ func _ready() -> void:
 	_load_block_types()
 	_generate_rows(ROWS_AHEAD)
 	_pre_break_starting_gap()
-	# Center camera horizontally on the grid; vertically a bit below the surface.
+	_spawn_player_at_surface()
+	GameState.day_started.connect(_on_day_started)
+
+func _spawn_player_at_surface() -> void:
+	# Stand on the surface, centered horizontally over the grid.
 	var grid_center_x := (GRID_COLS * BLOCK_SIZE.x) * 0.5
-	camera.position = Vector2(grid_center_x, BLOCK_SIZE.y * 4)
+	# Surface floor top is y = -2 (a 4px thick body centered at -2). Player half-height ~22.
+	player.reset_to(Vector2(grid_center_x, -24))
+
+func _on_day_started(_day: int) -> void:
+	_spawn_player_at_surface()
 
 func _load_block_types() -> void:
 	block_types.clear()

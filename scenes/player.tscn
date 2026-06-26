@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=3 uid="uid://dig0scene0player"]
+
+[ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
+
+[sub_resource type="RectangleShape2D" id="PlayerShape"]
+size = Vector2(36, 44)
+
+[node name="Player" type="CharacterBody2D"]
+script = ExtResource("1_player")
+
+[node name="FallbackRect" type="ColorRect" parent="."]
+offset_left = -18.0
+offset_top = -22.0
+offset_right = 18.0
+offset_bottom = 22.0
+color = Color(0.95, 0.85, 0.65, 1)
+mouse_filter = 2
+
+[node name="Sprite" type="Sprite2D" parent="."]
+visible = false
+centered = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("PlayerShape")

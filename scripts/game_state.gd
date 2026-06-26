@@ -4,11 +4,11 @@ const UPGRADE_DIR: String = "res://resources/upgrades/"
 const MILESTONE_DIR: String = "res://resources/milestones/"
 const SAVE_PATH: String = "user://save.json"
 const SAVE_VERSION: int = 2
-const DIRT_PRICE_PER_UNIT: float = 0.10
+const DIRT_PRICE_PER_UNIT: float = 0.02
 const AUTOSAVE_INTERVAL_SEC: float = 10.0
 const OFFLINE_PROGRESS_CAP_SEC: float = 60.0 * 60.0 * 12.0  # 12 hours
 const BASE_DAY_LENGTH_SEC: float = 30.0
-const BASE_BACKPACK_CAPACITY: float = 50.0
+const BASE_BACKPACK_CAPACITY: float = 30.0
 
 var dirt: float = 0.0
 var money: float = 0.0

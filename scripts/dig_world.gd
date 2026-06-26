@@ -1,7 +1,11 @@
 extends Node2D
 
 const BlockScene := preload("res://scenes/block.tscn")
-const GRID_COLS: int = 12
+const GRID_COLS: int = 32
+const DIG_STRIP_START: int = 12  # inclusive
+const DIG_STRIP_END: int = 19    # inclusive (cols 12..19 = 8 wide)
+const HOUSE_COL_START: int = 24  # cols 24..29 reserved for house footprint
+const HOUSE_COL_END: int = 29
 const ROWS_AHEAD: int = 30
 const BLOCK_DIR: String = "res://resources/blocks/"
 const BLOCK_SIZE: Vector2 = Vector2(48, 48)
@@ -12,6 +16,7 @@ const SURFACE_HEIGHT_PX: float = 96.0
 @onready var player: Player = $Player
 
 var block_types: Array[BlockType] = []
+var bedrock_type: BlockType
 var rng := RandomNumberGenerator.new()
 var generated_rows: int = 0
 var blocks_by_pos: Dictionary = {}  # Vector2i -> DigBlock
@@ -23,21 +28,20 @@ func _ready() -> void:
 	rng.randomize()
 	_load_block_types()
 	_generate_rows(ROWS_AHEAD)
-	_pre_break_starting_gap()
 	_spawn_player_at_surface()
 	GameState.day_started.connect(_on_day_started)
 
 func _spawn_player_at_surface() -> void:
-	# Stand on the surface, centered horizontally over the grid.
-	var grid_center_x := (GRID_COLS * BLOCK_SIZE.x) * 0.5
-	# Surface floor top is y = -2 (a 4px thick body centered at -2). Player half-height ~22.
-	player.reset_to(Vector2(grid_center_x, -24))
+	# Spawn just outside the house door (left edge of the house footprint).
+	var door_x := float(HOUSE_COL_START) * BLOCK_SIZE.x - BLOCK_SIZE.x * 0.5
+	player.reset_to(Vector2(door_x, -24))
 
 func _on_day_started(_day: int) -> void:
 	_spawn_player_at_surface()
 
 func _load_block_types() -> void:
 	block_types.clear()
+	bedrock_type = null
 	var dir := DirAccess.open(BLOCK_DIR)
 	if dir == null:
 		push_error("Could not open " + BLOCK_DIR)
@@ -48,7 +52,10 @@ func _load_block_types() -> void:
 		if file.ends_with(".tres") or file.ends_with(".res"):
 			var res := load(BLOCK_DIR + file)
 			if res is BlockType:
-				block_types.append(res)
+				if res.indestructible:
+					bedrock_type = res
+				else:
+					block_types.append(res)
 		file = dir.get_next()
 	dir.list_dir_end()
 
@@ -59,12 +66,15 @@ func _generate_rows(count: int) -> void:
 
 func _generate_row(row: int) -> void:
 	for col in GRID_COLS:
-		var type := _pick_block_type_for_depth(row)
+		var type: BlockType = null
+		if col >= DIG_STRIP_START and col <= DIG_STRIP_END:
+			type = _pick_block_type_for_depth(row)
+		else:
+			type = bedrock_type
 		if type == null:
 			continue
 		var block: DigBlock = BlockScene.instantiate()
 		block.setup(type, Vector2i(col, row))
-		# Block origin is its CENTER. Position so block tops align with row baseline.
 		block.position = Vector2(
 			col * BLOCK_SIZE.x + BLOCK_SIZE.x * 0.5,
 			(row - 1) * BLOCK_SIZE.y + BLOCK_SIZE.y * 0.5
@@ -74,12 +84,7 @@ func _generate_row(row: int) -> void:
 		block.broken.connect(_on_block_broken)
 		blocks_by_pos[Vector2i(col, row)] = block
 
-func _pre_break_starting_gap() -> void:
-	var center_col: int = GRID_COLS / 2
-	var pos := Vector2i(center_col, 1)
-	var block: DigBlock = blocks_by_pos.get(pos, null)
-	if block != null:
-		_remove_block(block, false)
+# Player digs their own entry now; no pre-broken gap.
 
 func _pick_block_type_for_depth(depth: int) -> BlockType:
 	var candidates: Array = []
@@ -158,18 +163,11 @@ func _on_block_click_requested(block: DigBlock) -> void:
 # Bypasses the click-reach rules since physical proximity is the new reach.
 func try_dig_at(grid_pos: Vector2i) -> bool:
 	if GameState.day_paused:
-		print("[world] try_dig_at(", grid_pos, "): day paused")
 		return false
 	if GameState.backpack_full():
-		print("[world] try_dig_at(", grid_pos, "): backpack full")
 		return false
 	var block: DigBlock = blocks_by_pos.get(grid_pos, null)
 	if block == null:
-		var neighbors: Array = []
-		for o in [Vector2i(0, -1), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(1, 0)]:
-			var p: Vector2i = grid_pos + o
-			neighbors.append("%s=%s" % [str(p), "yes" if blocks_by_pos.has(p) else "no"])
-		print("[world] try_dig_at(", grid_pos, "): no block. neighbors: ", neighbors)
 		return false
 	block.hit_once()
 	return true

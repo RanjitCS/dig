@@ -11,3 +11,4 @@ extends Resource
 @export var min_depth: int = 1
 @export var max_depth: int = 99999
 @export var weight: float = 1.0
+@export var indestructible: bool = false

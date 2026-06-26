@@ -44,6 +44,9 @@ func _apply_visuals() -> void:
 func hit_once() -> void:
 	if block_type == null:
 		return
+	if block_type.indestructible:
+		_flash()
+		return
 	var click_dirt_bonus := GameState._sum_effect(Upgrade.Effect.CLICK_DIRT)
 	var dmg: int = 1 + int(click_dirt_bonus)
 	hits_remaining -= dmg

@@ -41,10 +41,53 @@ offset_bottom = 0.0
 color = Color(0.06, 0.05, 0.04, 1)
 mouse_filter = 2
 
+[node name="House" type="Node2D" parent="Surface"]
+position = Vector2(1152, 0)
+
+[node name="HouseBody" type="ColorRect" parent="Surface/House"]
+offset_left = 0.0
+offset_top = -192.0
+offset_right = 288.0
+offset_bottom = 0.0
+color = Color(0.55, 0.4, 0.32, 1)
+mouse_filter = 2
+
+[node name="HouseRoof" type="ColorRect" parent="Surface/House"]
+offset_left = -16.0
+offset_top = -224.0
+offset_right = 304.0
+offset_bottom = -180.0
+color = Color(0.35, 0.22, 0.18, 1)
+mouse_filter = 2
+
+[node name="HouseDoor" type="ColorRect" parent="Surface/House"]
+offset_left = 16.0
+offset_top = -96.0
+offset_right = 56.0
+offset_bottom = 0.0
+color = Color(0.2, 0.13, 0.10, 1)
+mouse_filter = 2
+
+[node name="HouseLabel" type="Label" parent="Surface/House"]
+offset_left = 60.0
+offset_top = -150.0
+offset_right = 280.0
+offset_bottom = -120.0
+text = "HOUSE"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 0.85)
+mouse_filter = 2
+
+[node name="HouseSprite" type="Sprite2D" parent="Surface/House"]
+visible = false
+centered = false
+
 [node name="Grid" type="Node2D" parent="."]
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
-position = Vector2(288, -40)
+position = Vector2(1140, -40)
 
 [node name="Camera2D" type="Camera2D" parent="Player"]
 position_smoothing_enabled = true

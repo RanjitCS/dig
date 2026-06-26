@@ -13,3 +13,5 @@ base_cost = 50.0
 cost_mult = 1.18
 cost_currency = &"money"
 unlock_money = 25.0
+reach = 0
+is_equippable = true

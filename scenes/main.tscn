@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://b8dig0main0001"]
+[gd_scene load_steps=4 format=3 uid="uid://b8dig0main0001"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" uid="uid://dig0scene0digworld" path="res://scenes/dig_world.tscn" id="2_world"]
+[ext_resource type="Script" path="res://scripts/tool_selector.gd" id="3_toolsel"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -76,6 +77,15 @@ layout_mode = 2
 text = "Reset"
 theme_override_font_sizes/font_size = 11
 modulate = Color(0.75, 0.65, 0.6, 1)
+
+[node name="ToolBar" type="PanelContainer" parent="Root"]
+layout_mode = 2
+
+[node name="ToolSelector" type="HBoxContainer" parent="Root/ToolBar"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+script = ExtResource("3_toolsel")
 
 [node name="Body" type="HBoxContainer" parent="Root"]
 layout_mode = 2

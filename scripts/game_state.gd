@@ -19,6 +19,8 @@ var upgrade_levels: Dictionary = {}  # StringName -> int
 var milestones: Array[Milestone] = []
 var triggered_milestones: Dictionary = {}  # StringName -> bool
 
+var equipped_id: StringName = &"spade"
+
 var _autosave_accum: float = 0.0
 var _last_saved_unix: int = 0
 
@@ -27,6 +29,7 @@ signal money_changed(new_amount: float)
 signal upgrade_purchased(upgrade_id: StringName, new_level: int)
 signal milestone_triggered(milestone: Milestone)
 signal offline_progress(seconds: float, dirt_gained: float, money_gained: float)
+signal equipped_changed(upgrade_id: StringName)
 
 func _ready() -> void:
 	_load_upgrades()
@@ -126,6 +129,25 @@ func is_unlocked(upgrade_id: StringName) -> bool:
 		return false
 	return total_money_earned >= up.unlock_money
 
+func equip(upgrade_id: StringName) -> bool:
+	var up := get_upgrade(upgrade_id)
+	if up == null or not up.is_equippable:
+		return false
+	if not is_unlocked(upgrade_id):
+		return false
+	equipped_id = upgrade_id
+	equipped_changed.emit(equipped_id)
+	return true
+
+func equipped_upgrade() -> Upgrade:
+	return get_upgrade(equipped_id)
+
+func equipped_reach() -> int:
+	var up := equipped_upgrade()
+	if up == null:
+		return Upgrade.Reach.CARDINAL_4
+	return up.reach
+
 # --- Persistence ----------------------------------------------------------
 
 func save_game() -> void:
@@ -145,6 +167,7 @@ func save_game() -> void:
 		"total_money_earned": total_money_earned,
 		"upgrade_levels": levels_plain,
 		"triggered_milestones": milestones_plain,
+		"equipped_id": String(equipped_id),
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f == null:
@@ -183,8 +206,11 @@ func load_game() -> void:
 	for k in ms_plain.keys():
 		triggered_milestones[StringName(k)] = bool(ms_plain[k])
 	_last_saved_unix = int(data.get("saved_at", 0))
+	var saved_equipped := String(data.get("equipped_id", "spade"))
+	equipped_id = StringName(saved_equipped)
 	dirt_changed.emit(dirt)
 	money_changed.emit(money)
+	equipped_changed.emit(equipped_id)
 	_apply_offline_progress()
 
 func _apply_offline_progress() -> void:

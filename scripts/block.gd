@@ -3,6 +3,7 @@ extends Control
 
 const SIZE: Vector2 = Vector2(48, 48)
 
+signal click_requested(block: DigBlock)
 signal broken(block: DigBlock)
 
 var block_type: BlockType
@@ -35,31 +36,19 @@ func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
-			_hit()
+			click_requested.emit(self)
 
-func _hit() -> void:
+func hit_once() -> void:
 	if block_type == null:
 		return
 	var click_dirt_bonus := GameState._sum_effect(Upgrade.Effect.CLICK_DIRT)
 	var dmg: int = 1 + int(click_dirt_bonus)
 	hits_remaining -= dmg
 	if hits_remaining <= 0:
-		_apply_yields_and_break()
+		broken.emit(self)
 	else:
 		_update_crack()
 		_flash()
-
-func _apply_yields_and_break() -> void:
-	var crit_chance := GameState._sum_effect(Upgrade.Effect.CRIT_CHANCE)
-	var crit := 1.0
-	if crit_chance > 0.0 and randf() < crit_chance:
-		crit = 5.0
-	var money_mult := 1.0 + GameState._sum_effect(Upgrade.Effect.CLICK_MONEY_MULT)
-	GameState._add_dirt(block_type.dirt_yield * crit)
-	if block_type.money_yield > 0.0:
-		GameState._add_money(block_type.money_yield * crit * money_mult)
-	broken.emit(self)
-	queue_free()
 
 func _update_crack() -> void:
 	if block_type == null or block_type.hits_to_break <= 1:

@@ -84,33 +84,35 @@ func _physics_process(delta: float) -> void:
 
 	# --- dig action ---
 	if Input.is_action_just_pressed("dig"):
-		print("[player] dig pressed at ", global_position, " facing=", _facing)
 		_try_dig()
 
 func _try_dig() -> void:
 	var world := get_parent()
-	if world == null:
-		print("[player] no parent")
+	if world == null or not world.has_method("try_dig_at"):
 		return
-	if not world.has_method("try_dig_at"):
-		print("[player] parent ", world.name, " has no try_dig_at")
-		return
-	var target := _dig_target_grid()
-	var ok: bool = world.try_dig_at(target)
-	print("[player] dig target=", target, " ok=", ok)
+	# Try candidates in priority order; first one with a block wins.
+	for target in _dig_candidates():
+		if world.try_dig_at(target):
+			return
 
-func _dig_target_grid() -> Vector2i:
-	# Pick a grid cell adjacent to the player based on input direction.
-	# Priority: down > up > forward.
-	var feet := global_position + Vector2(0, SIZE.y * 0.5 + 2)
-	var head := global_position - Vector2(0, SIZE.y * 0.5 + 2)
-	var forward := global_position + Vector2(float(_facing) * (SIZE.x * 0.5 + 4), 0)
+func _dig_candidates() -> Array:
 	var world := get_parent()
+	# Sample points at the player's feet, head, and at chest-height in front.
+	# All three are nudged slightly so they land *inside* the target grid cell.
+	var feet := global_position + Vector2(0, SIZE.y * 0.5 + 4)
+	var head := global_position - Vector2(0, SIZE.y * 0.5 + 4)
+	var fwd_low := global_position + Vector2(float(_facing) * (SIZE.x * 0.5 + 4), SIZE.y * 0.25)
+	var fwd_at_floor := Vector2(global_position.x + float(_facing) * (SIZE.x * 0.5 + 4), max(global_position.y + SIZE.y * 0.4, 4.0))
 	if Input.is_action_pressed("move_down"):
-		return world.world_pos_to_grid(feet)
+		return [world.world_pos_to_grid(feet)]
 	if Input.is_action_pressed("move_up"):
-		return world.world_pos_to_grid(head)
-	return world.world_pos_to_grid(forward)
+		return [world.world_pos_to_grid(head)]
+	# Default: forward (chest-high), then forward-at-floor, then straight down.
+	return [
+		world.world_pos_to_grid(fwd_low),
+		world.world_pos_to_grid(fwd_at_floor),
+		world.world_pos_to_grid(feet),
+	]
 
 func facing_dir() -> int:
 	return _facing

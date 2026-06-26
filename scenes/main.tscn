@@ -130,12 +130,14 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 stretch = true
-mouse_filter = 1
+mouse_filter = 0
 
 [node name="Viewport" type="SubViewport" parent="Root/Body/WorldViewport"]
 handle_input_locally = false
 size = Vector2i(800, 600)
 render_target_update_mode = 4
+physics_object_picking = true
+gui_disable_input = false
 
 [node name="DigWorld" parent="Root/Body/WorldViewport/Viewport" instance=ExtResource("2_world")]
 unique_name_in_owner = true

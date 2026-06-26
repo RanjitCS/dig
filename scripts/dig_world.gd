@@ -1,18 +1,21 @@
-extends Control
+extends Node2D
 
 const BlockScene := preload("res://scenes/block.tscn")
 const GRID_COLS: int = 12
 const ROWS_AHEAD: int = 30
 const BLOCK_DIR: String = "res://resources/blocks/"
+const BLOCK_SIZE: Vector2 = Vector2(48, 48)
+const SURFACE_HEIGHT_PX: float = 96.0
 
-@onready var surface: ColorRect = %Surface
-@onready var grid: Control = %Grid
+@onready var surface_visual: Node2D = $Surface
+@onready var grid_root: Node2D = $Grid
+@onready var camera: Camera2D = $Camera2D
 
 var block_types: Array[BlockType] = []
 var rng := RandomNumberGenerator.new()
 var generated_rows: int = 0
 var blocks_by_pos: Dictionary = {}  # Vector2i -> DigBlock
-var broken_cells: Dictionary = {}   # Vector2i -> true (also includes "above-surface" sentinels)
+var broken_cells: Dictionary = {}   # Vector2i -> true
 
 signal deepest_changed(row: int)
 
@@ -21,6 +24,9 @@ func _ready() -> void:
 	_load_block_types()
 	_generate_rows(ROWS_AHEAD)
 	_pre_break_starting_gap()
+	# Center camera horizontally on the grid; vertically a bit below the surface.
+	var grid_center_x := (GRID_COLS * BLOCK_SIZE.x) * 0.5
+	camera.position = Vector2(grid_center_x, BLOCK_SIZE.y * 4)
 
 func _load_block_types() -> void:
 	block_types.clear()
@@ -44,15 +50,18 @@ func _generate_rows(count: int) -> void:
 		generated_rows += 1
 
 func _generate_row(row: int) -> void:
-	# Row 0 is the surface line (all "broken"/air conceptually — see is_broken).
 	for col in GRID_COLS:
 		var type := _pick_block_type_for_depth(row)
 		if type == null:
 			continue
 		var block: DigBlock = BlockScene.instantiate()
 		block.setup(type, Vector2i(col, row))
-		block.position = Vector2(col * DigBlock.SIZE.x, (row - 1) * DigBlock.SIZE.y)
-		grid.add_child(block)
+		# Block origin is its CENTER. Position so block tops align with row baseline.
+		block.position = Vector2(
+			col * BLOCK_SIZE.x + BLOCK_SIZE.x * 0.5,
+			(row - 1) * BLOCK_SIZE.y + BLOCK_SIZE.y * 0.5
+		)
+		grid_root.add_child(block)
 		block.click_requested.connect(_on_block_click_requested)
 		block.broken.connect(_on_block_broken)
 		blocks_by_pos[Vector2i(col, row)] = block
@@ -63,7 +72,6 @@ func _pre_break_starting_gap() -> void:
 	var block: DigBlock = blocks_by_pos.get(pos, null)
 	if block != null:
 		_remove_block(block, false)
-	# Note: surface (row 0) is implicitly broken for adjacency purposes — see is_broken.
 
 func _pick_block_type_for_depth(depth: int) -> BlockType:
 	var candidates: Array = []
@@ -85,17 +93,15 @@ func _pick_block_type_for_depth(depth: int) -> BlockType:
 # --- Adjacency / reach -----------------------------------------------------
 
 func is_broken(pos: Vector2i) -> bool:
-	# Anything at row 0 or above is implicit air.
 	if pos.y <= 0:
 		return true
-	# Anything outside the grid columns is treated as wall (impassable).
 	if pos.x < 0 or pos.x >= GRID_COLS:
 		return false
 	return broken_cells.has(pos)
 
 func is_reachable(pos: Vector2i, reach: int) -> bool:
 	if not blocks_by_pos.has(pos):
-		return false  # already broken or never existed
+		return false
 	match reach:
 		Upgrade.Reach.CARDINAL_4:
 			return _has_broken_neighbor(pos, false)
@@ -121,10 +127,7 @@ func _has_broken_neighbor(pos: Vector2i, include_diagonals: bool) -> bool:
 	return false
 
 func _has_broken_above(pos: Vector2i) -> bool:
-	# Any broken cell in the same column above this one — straight column dig.
-	if is_broken(Vector2i(pos.x, pos.y - 1)):
-		return true
-	return false
+	return is_broken(Vector2i(pos.x, pos.y - 1))
 
 # --- Click handling --------------------------------------------------------
 
@@ -138,7 +141,6 @@ func _on_block_click_requested(block: DigBlock) -> void:
 	if not is_reachable(block.grid_pos, reach):
 		_nudge_block(block)
 		return
-	# Valid target. Apply tool damage.
 	if reach == Upgrade.Reach.AOE_3X3:
 		_hit_aoe(block.grid_pos)
 	else:
@@ -153,7 +155,6 @@ func _hit_aoe(center: Vector2i) -> void:
 				b.hit_once()
 
 func _nudge_block(block: DigBlock) -> void:
-	# Tiny shake to signal "can't reach this."
 	var orig := block.position
 	var tw := create_tween()
 	tw.tween_property(block, "position", orig + Vector2(-3, 0), 0.04)

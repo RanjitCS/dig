@@ -125,11 +125,20 @@ layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 0
 
-[node name="DigWorld" parent="Root/Body" instance=ExtResource("2_world")]
-unique_name_in_owner = true
+[node name="WorldViewport" type="SubViewportContainer" parent="Root/Body"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+stretch = true
+mouse_filter = 1
+
+[node name="Viewport" type="SubViewport" parent="Root/Body/WorldViewport"]
+handle_input_locally = false
+size = Vector2i(800, 600)
+render_target_update_mode = 4
+
+[node name="DigWorld" parent="Root/Body/WorldViewport/Viewport" instance=ExtResource("2_world")]
+unique_name_in_owner = true
 
 [node name="RightPanel" type="PanelContainer" parent="Root/Body"]
 custom_minimum_size = Vector2(340, 0)

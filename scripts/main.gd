@@ -13,7 +13,7 @@ const UpgradeRowScene := preload("res://scenes/upgrade_row.tscn")
 @onready var toast_timer: Timer = %ToastTimer
 @onready var reset_button: Button = %ResetButton
 @onready var sell_button: Button = %SellButton
-@onready var dig_world: Control = %DigWorld
+@onready var dig_world: Node2D = %DigWorld
 
 var rows: Array = []
 var deepest_dug: int = 0
@@ -28,15 +28,18 @@ func _ready() -> void:
 	GameState.offline_progress.connect(_on_offline_progress)
 	GameState.day_tick.connect(_on_day_tick)
 	GameState.day_started.connect(_on_day_started)
+	GameState.day_ended.connect(_on_day_ended_for_sell)
 	dig_world.deepest_changed.connect(_on_deepest_changed)
 	toast_timer.timeout.connect(_hide_toast)
 	toast_label.visible = false
 	_build_upgrade_rows()
 	_refresh_all()
+	_refresh_sell_button()
 
 func _on_dirt_changed(_v: float) -> void:
 	_refresh_dirt()
 	_refresh_rows()
+	_refresh_sell_button()
 
 func _on_money_changed(_v: float) -> void:
 	_refresh_money()
@@ -61,9 +64,20 @@ func _on_reset_pressed() -> void:
 	_show_toast("Reset. Start over.")
 
 func _on_sell_pressed() -> void:
+	if not GameState.day_paused:
+		return
 	var earned := GameState.sell_all_dirt()
 	if earned > 0.0:
 		_show_toast("Sold dirt. +$%s" % _fmt(earned))
+	_refresh_sell_button()
+
+func _on_day_ended_for_sell(_day: int, _dirt_dug: float, _money: float) -> void:
+	_refresh_sell_button()
+
+func _refresh_sell_button() -> void:
+	var can_sell := GameState.day_paused and GameState.dirt > 0.0
+	sell_button.disabled = not can_sell
+	sell_button.modulate = Color(1, 1, 1, 1) if can_sell else Color(1, 1, 1, 0.35)
 
 func _on_deepest_changed(row: int) -> void:
 	if row > deepest_dug:
@@ -79,6 +93,7 @@ func _on_day_tick(left: float, length: float) -> void:
 func _on_day_started(day: int) -> void:
 	day_label.text = "Day %d" % day
 	_refresh_day_bar_max()
+	_refresh_sell_button()
 
 func _build_upgrade_rows() -> void:
 	for u in GameState.upgrades:

@@ -4,6 +4,7 @@ extends Resource
 @export var id: StringName = &""
 @export var display_name: String = ""
 @export var color: Color = Color(0.4, 0.3, 0.2)
+@export var texture: Texture2D  # optional; falls back to color rect if null
 @export var hits_to_break: int = 1
 @export var dirt_yield: float = 1.0
 @export var money_yield: float = 0.0

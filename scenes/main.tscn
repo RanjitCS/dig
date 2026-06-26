@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://b8dig0main0001"]
+[gd_scene load_steps=3 format=3 uid="uid://b8dig0main0001"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="PackedScene" uid="uid://dig0scene0digworld" path="res://scenes/dig_world.tscn" id="2_world"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -18,89 +19,95 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.12, 0.1, 0.08, 1)
+color = Color(0.08, 0.07, 0.06, 1)
 
-[node name="Root" type="HBoxContainer" parent="."]
+[node name="Root" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/separation = 0
+
+[node name="TopBar" type="PanelContainer" parent="Root"]
+layout_mode = 2
+
+[node name="TopBarRow" type="HBoxContainer" parent="Root/TopBar"]
+layout_mode = 2
 theme_override_constants/separation = 24
 
-[node name="LeftColumn" type="VBoxContainer" parent="Root"]
+[node name="Title" type="Label" parent="Root/TopBar/TopBarRow"]
 layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-theme_override_constants/separation = 16
-alignment = 1
-
-[node name="Title" type="Label" parent="Root/LeftColumn"]
-layout_mode = 2
-size_flags_horizontal = 4
 text = "DIG"
-horizontal_alignment = 1
-theme_override_font_sizes/font_size = 64
+theme_override_font_sizes/font_size = 28
 
-[node name="Subtitle" type="Label" parent="Root/LeftColumn"]
+[node name="Subtitle" type="Label" parent="Root/TopBar/TopBarRow"]
 layout_mode = 2
-size_flags_horizontal = 4
 text = "21. tired. digging."
-horizontal_alignment = 1
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 12
 modulate = Color(0.7, 0.65, 0.6, 1)
 
-[node name="MoneyLabel" type="Label" parent="Root/LeftColumn"]
+[node name="Spacer" type="Control" parent="Root/TopBar/TopBarRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MoneyLabel" type="Label" parent="Root/TopBar/TopBarRow"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 4
 text = "$0"
-horizontal_alignment = 1
-theme_override_font_sizes/font_size = 36
+theme_override_font_sizes/font_size = 22
 
-[node name="DirtLabel" type="Label" parent="Root/LeftColumn"]
+[node name="DirtLabel" type="Label" parent="Root/TopBar/TopBarRow"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 4
 text = "Dirt: 0"
-horizontal_alignment = 1
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 16
 
-[node name="DigButton" type="Button" parent="Root/LeftColumn"]
+[node name="DepthLabel" type="Label" parent="Root/TopBar/TopBarRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(260, 100)
 layout_mode = 2
-size_flags_horizontal = 4
-text = "DIG"
-theme_override_font_sizes/font_size = 32
+text = "Depth: 0"
+theme_override_font_sizes/font_size = 16
 
-[node name="ResetButton" type="Button" parent="Root/LeftColumn"]
+[node name="ResetButton" type="Button" parent="Root/TopBar/TopBarRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(120, 30)
 layout_mode = 2
-size_flags_horizontal = 4
-text = "Reset (debug)"
+text = "Reset"
 theme_override_font_sizes/font_size = 11
-modulate = Color(0.7, 0.6, 0.55, 1)
+modulate = Color(0.75, 0.65, 0.6, 1)
 
-[node name="RightColumn" type="VBoxContainer" parent="Root"]
+[node name="Body" type="HBoxContainer" parent="Root"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 0
+
+[node name="DigWorld" parent="Root/Body" instance=ExtResource("2_world")]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+
+[node name="RightPanel" type="PanelContainer" parent="Root/Body"]
+custom_minimum_size = Vector2(340, 0)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="RightCol" type="VBoxContainer" parent="Root/Body/RightPanel"]
+layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="UpgradesTitle" type="Label" parent="Root/RightColumn"]
+[node name="UpgradesTitle" type="Label" parent="Root/Body/RightPanel/RightCol"]
 layout_mode = 2
 text = "Tools"
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 22
 
-[node name="UpgradesScroll" type="ScrollContainer" parent="Root/RightColumn"]
+[node name="UpgradesScroll" type="ScrollContainer" parent="Root/Body/RightPanel/RightCol"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="UpgradesList" type="VBoxContainer" parent="Root/RightColumn/UpgradesScroll"]
+[node name="UpgradesList" type="VBoxContainer" parent="Root/Body/RightPanel/RightCol/UpgradesScroll"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3

@@ -4,29 +4,28 @@ const UpgradeRowScene := preload("res://scenes/upgrade_row.tscn")
 
 @onready var dirt_label: Label = %DirtLabel
 @onready var money_label: Label = %MoneyLabel
-@onready var dig_button: Button = %DigButton
+@onready var depth_label: Label = %DepthLabel
 @onready var upgrades_list: VBoxContainer = %UpgradesList
 @onready var toast_label: Label = %ToastLabel
 @onready var toast_timer: Timer = %ToastTimer
 @onready var reset_button: Button = %ResetButton
+@onready var dig_world: Control = %DigWorld
 
 var rows: Array = []
+var deepest_dug: int = 0
 
 func _ready() -> void:
-	dig_button.pressed.connect(_on_dig_pressed)
 	reset_button.pressed.connect(_on_reset_pressed)
 	GameState.dirt_changed.connect(_on_dirt_changed)
 	GameState.money_changed.connect(_on_money_changed)
 	GameState.upgrade_purchased.connect(_on_upgrade_purchased)
 	GameState.milestone_triggered.connect(_on_milestone_triggered)
 	GameState.offline_progress.connect(_on_offline_progress)
+	dig_world.deepest_changed.connect(_on_deepest_changed)
 	toast_timer.timeout.connect(_hide_toast)
 	toast_label.visible = false
 	_build_upgrade_rows()
 	_refresh_all()
-
-func _on_dig_pressed() -> void:
-	GameState.dig()
 
 func _on_dirt_changed(_v: float) -> void:
 	_refresh_dirt()
@@ -52,6 +51,11 @@ func _on_reset_pressed() -> void:
 	GameState.reset_game()
 	_show_toast("Reset. Start over.")
 
+func _on_deepest_changed(row: int) -> void:
+	if row > deepest_dug:
+		deepest_dug = row
+		_refresh_depth()
+
 func _build_upgrade_rows() -> void:
 	for u in GameState.upgrades:
 		var row := UpgradeRowScene.instantiate()
@@ -62,6 +66,7 @@ func _build_upgrade_rows() -> void:
 func _refresh_all() -> void:
 	_refresh_dirt()
 	_refresh_money()
+	_refresh_depth()
 	_refresh_rows()
 
 func _refresh_dirt() -> void:
@@ -69,6 +74,9 @@ func _refresh_dirt() -> void:
 
 func _refresh_money() -> void:
 	money_label.text = "$%s" % _fmt(GameState.money)
+
+func _refresh_depth() -> void:
+	depth_label.text = "Depth: %d" % deepest_dug
 
 func _refresh_rows() -> void:
 	for r in rows:

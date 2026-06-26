@@ -91,9 +91,12 @@ func _try_dig() -> void:
 	if world == null or not world.has_method("try_dig_at"):
 		print("[player] dig: no world parent (parent=", get_parent(), ")")
 		return
-	print("[player] dig: player.pos=", global_position, " facing=", _facing)
-	# Try candidates in priority order; first one with a block wins.
-	for target in _dig_candidates():
+	var down_held: bool = Input.is_action_pressed("move_down")
+	var up_held: bool = Input.is_action_pressed("move_up")
+	print("[player] dig: pos=", global_position, " facing=", _facing, " down=", down_held, " up=", up_held)
+	var candidates := _dig_candidates()
+	print("  candidates(", candidates.size(), "): ", candidates)
+	for target in candidates:
 		var ok: bool = world.try_dig_at(target)
 		print("  -> target=", target, " ok=", ok)
 		if ok:

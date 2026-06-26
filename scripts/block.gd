@@ -57,7 +57,7 @@ func hit_once() -> void:
 		_flash()
 
 func _update_crack() -> void:
-	if block_type == null or block_type.hits_to_break <= 1:
+	if block_type == null or block_type.indestructible or block_type.hits_to_break <= 1:
 		crack_label.text = ""
 		return
 	crack_label.text = "%d" % hits_remaining

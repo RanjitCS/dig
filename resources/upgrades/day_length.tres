@@ -5,8 +5,9 @@
 [resource]
 script = ExtResource("1_upgrade")
 id = &"day_length"
-display_name = "Coffee"
-flavor = "Cheap, hot, ruins your stomach. Buys you 15 more seconds."
+display_name = "Mom's Coffee"
+flavor = "She makes it too strong. Buys you 15 more seconds."
+category = 1
 effect = 5
 effect_per_level = 15.0
 base_cost = 20.0
@@ -15,3 +16,4 @@ cost_currency = &"money"
 unlock_money = 0.0
 reach = 0
 is_equippable = false
+max_level = 0

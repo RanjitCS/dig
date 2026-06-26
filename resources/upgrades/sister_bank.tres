@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=2 format=3 uid="uid://dig0upgrade0sisterbank"]
+
+[ext_resource type="Script" path="res://scripts/upgrade.gd" id="1_upgrade"]
+
+[resource]
+script = ExtResource("1_upgrade")
+id = &"sister_bank"
+display_name = "Sister's Bank Account"
+flavor = "She opened it for you. The PIN is your old jersey number. She didn't ask."
+category = 1
+effect = 4
+effect_per_level = 0.10
+base_cost = 300.0
+cost_mult = 1.25
+cost_currency = &"money"
+unlock_money = 250.0
+reach = 0
+is_equippable = false
+max_level = 0

@@ -2,12 +2,25 @@ extends CanvasLayer
 
 const UpgradeRowScene := preload("res://scenes/upgrade_row.tscn")
 
+const CATEGORY_TITLES := {
+	Upgrade.Category.TOOLS: "Tools",
+	Upgrade.Category.FAMILY: "Family",
+	Upgrade.Category.ARYA: "Arya",
+	Upgrade.Category.LAND: "Land",
+}
+
+const CATEGORY_ORDER := [
+	Upgrade.Category.TOOLS,
+	Upgrade.Category.FAMILY,
+	Upgrade.Category.ARYA,
+	Upgrade.Category.LAND,
+]
+
 @onready var day_label: Label = %DayLabel
 @onready var earnings_label: Label = %EarningsLabel
 @onready var dirt_label: Label = %DirtLabel
 @onready var upgrades_list: VBoxContainer = %UpgradesList
 @onready var continue_button: Button = %ContinueButton
-@onready var root_panel: Control = %RootPanel
 
 var rows: Array = []
 
@@ -34,21 +47,40 @@ func _on_continue() -> void:
 	GameState.start_next_day()
 
 func _on_upgrade_purchased(_id: StringName, _level: int) -> void:
-	_build_upgrade_rows()
+	_refresh_rows()
 
 func _on_money_changed(_v: float) -> void:
 	_refresh_rows()
 
 func _build_upgrade_rows() -> void:
-	for r in rows:
-		r.queue_free()
+	for c in upgrades_list.get_children():
+		c.queue_free()
 	rows.clear()
+	for cat in CATEGORY_ORDER:
+		var ups := _upgrades_in_category(cat)
+		if ups.is_empty():
+			continue
+		var header := _make_header(CATEGORY_TITLES[cat])
+		upgrades_list.add_child(header)
+		for u in ups:
+			var row := UpgradeRowScene.instantiate()
+			upgrades_list.add_child(row)
+			row.setup(u)
+			rows.append(row)
+
+func _upgrades_in_category(cat: int) -> Array:
+	var out: Array = []
 	for u in GameState.upgrades:
-		var row := UpgradeRowScene.instantiate()
-		upgrades_list.add_child(row)
-		row.setup(u)
-		rows.append(row)
-	_refresh_rows()
+		if u.category == cat:
+			out.append(u)
+	return out
+
+func _make_header(text: String) -> Label:
+	var l := Label.new()
+	l.text = text
+	l.add_theme_font_size_override("font_size", 14)
+	l.modulate = Color(0.7, 0.65, 0.6, 1)
+	return l
 
 func _refresh_rows() -> void:
 	for r in rows:

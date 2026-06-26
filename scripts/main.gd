@@ -75,6 +75,8 @@ func _on_day_started(day: int) -> void:
 
 func _build_upgrade_rows() -> void:
 	for u in GameState.upgrades:
+		if u.category != Upgrade.Category.TOOLS:
+			continue
 		var row := UpgradeRowScene.instantiate()
 		upgrades_list.add_child(row)
 		row.setup(u)

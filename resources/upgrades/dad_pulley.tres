@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=2 format=3 uid="uid://dig0upgrade0dadpulley"]
+
+[ext_resource type="Script" path="res://scripts/upgrade.gd" id="1_upgrade"]
+
+[resource]
+script = ExtResource("1_upgrade")
+id = &"dad_pulley"
+display_name = "Dad's Pulley"
+flavor = "He set it up overnight. He never said anything. It hauls the dirt up for you."
+category = 1
+effect = 3
+effect_per_level = 0.3
+base_cost = 150.0
+cost_mult = 1.22
+cost_currency = &"money"
+unlock_money = 100.0
+reach = 0
+is_equippable = false
+max_level = 0

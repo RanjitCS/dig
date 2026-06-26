@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=2 format=3 uid="uid://dig0upgrade0aryaaerospace"]
+
+[ext_resource type="Script" path="res://scripts/upgrade.gd" id="1_upgrade"]
+
+[resource]
+script = ExtResource("1_upgrade")
+id = &"arya_aerospace"
+display_name = "Arya — Aerospace"
+flavor = "She wore a uniform this time. \"I'm joining the space program. Be back soon.\""
+category = 2
+effect = 4
+effect_per_level = 5.0
+base_cost = 100000.0
+cost_mult = 1.0
+cost_currency = &"money"
+unlock_money = 80000.0
+reach = 0
+is_equippable = false
+max_level = 1

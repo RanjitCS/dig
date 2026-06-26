@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=2 format=3 uid="uid://dig0upgrade0momgloves"]
+
+[ext_resource type="Script" path="res://scripts/upgrade.gd" id="1_upgrade"]
+
+[resource]
+script = ExtResource("1_upgrade")
+id = &"mom_gloves"
+display_name = "Mom's Knit Gloves"
+flavor = "She finished them last week. You haven't taken them off."
+category = 1
+effect = 2
+effect_per_level = 0.01
+base_cost = 80.0
+cost_mult = 1.30
+cost_currency = &"money"
+unlock_money = 60.0
+reach = 0
+is_equippable = false
+max_level = 0

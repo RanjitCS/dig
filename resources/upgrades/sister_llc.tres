@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=2 format=3 uid="uid://dig0upgrade0sisterllc"]
+
+[ext_resource type="Script" path="res://scripts/upgrade.gd" id="1_upgrade"]
+
+[resource]
+script = ExtResource("1_upgrade")
+id = &"sister_llc"
+display_name = "Sister's LLC"
+flavor = "She filed the paperwork. \"You're a company now. You're welcome.\""
+category = 1
+effect = 1
+effect_per_level = 0.15
+base_cost = 800.0
+cost_mult = 1.35
+cost_currency = &"money"
+unlock_money = 700.0
+reach = 0
+is_equippable = false
+max_level = 0

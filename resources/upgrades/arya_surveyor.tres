@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=2 format=3 uid="uid://dig0upgrade0aryasurveyor"]
+
+[ext_resource type="Script" path="res://scripts/upgrade.gd" id="1_upgrade"]
+
+[resource]
+script = ExtResource("1_upgrade")
+id = &"arya_surveyor"
+display_name = "Arya — Surveyor"
+flavor = "She drew a map. \"I'm going to be a surveyor. Be back soon.\""
+category = 2
+effect = 2
+effect_per_level = 0.10
+base_cost = 25000.0
+cost_mult = 1.0
+cost_currency = &"money"
+unlock_money = 20000.0
+reach = 0
+is_equippable = false
+max_level = 1

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=2 format=3 uid="uid://dig0upgrade0aryaengineer"]
+
+[ext_resource type="Script" path="res://scripts/upgrade.gd" id="1_upgrade"]
+
+[resource]
+script = ExtResource("1_upgrade")
+id = &"arya_engineer"
+display_name = "Arya — Engineer"
+flavor = "She rebuilt the drill in a weekend. \"I'm going to be an engineer. Be back soon.\""
+category = 2
+effect = 3
+effect_per_level = 5.0
+base_cost = 8000.0
+cost_mult = 1.0
+cost_currency = &"money"
+unlock_money = 6000.0
+reach = 0
+is_equippable = false
+max_level = 1

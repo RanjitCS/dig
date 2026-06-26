@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=2 format=3 uid="uid://dig0upgrade0momsandwich"]
+
+[ext_resource type="Script" path="res://scripts/upgrade.gd" id="1_upgrade"]
+
+[resource]
+script = ExtResource("1_upgrade")
+id = &"mom_sandwich"
+display_name = "Mom's Sandwich"
+flavor = "She left it on the porch. You ate it. You don't remember tasting it."
+category = 1
+effect = 1
+effect_per_level = 0.05
+base_cost = 40.0
+cost_mult = 1.25
+cost_currency = &"money"
+unlock_money = 15.0
+reach = 0
+is_equippable = false
+max_level = 0

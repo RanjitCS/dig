@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=2 format=3 uid="uid://dig0upgrade0aryageologist"]
+
+[ext_resource type="Script" path="res://scripts/upgrade.gd" id="1_upgrade"]
+
+[resource]
+script = ExtResource("1_upgrade")
+id = &"arya_geologist"
+display_name = "Arya — Geologist"
+flavor = "She brought a notebook. \"I'm going to be a geologist. Be back soon.\""
+category = 2
+effect = 1
+effect_per_level = 0.50
+base_cost = 1500.0
+cost_mult = 1.0
+cost_currency = &"money"
+unlock_money = 1000.0
+reach = 0
+is_equippable = false
+max_level = 1

@@ -26,11 +26,18 @@ func refresh() -> void:
 	if upgrade == null:
 		return
 	var lvl := GameState.level_of(upgrade.id)
-	var cost := GameState.cost_of(upgrade.id)
 	var currency := "$" if upgrade.cost_currency == &"money" else "dirt"
-	level_label.text = "Lv %d" % lvl
-	buy_button.text = "Buy  •  %s%s" % [currency, _fmt(cost)]
-	buy_button.disabled = not GameState.can_afford(upgrade.id)
+	if upgrade.max_level > 0:
+		level_label.text = "Lv %d / %d" % [lvl, upgrade.max_level]
+	else:
+		level_label.text = "Lv %d" % lvl
+	if GameState.is_maxed(upgrade.id):
+		buy_button.text = "Owned"
+		buy_button.disabled = true
+	else:
+		var cost := GameState.cost_of(upgrade.id)
+		buy_button.text = "Buy  •  %s%s" % [currency, _fmt(cost)]
+		buy_button.disabled = not GameState.can_afford(upgrade.id)
 	visible = GameState.is_unlocked(upgrade.id)
 
 func _on_buy() -> void:

@@ -112,6 +112,8 @@ func buy_upgrade(upgrade_id: StringName) -> bool:
 	var up := get_upgrade(upgrade_id)
 	if up == null:
 		return false
+	if up.is_maxed(level_of(upgrade_id)):
+		return false
 	var cost := cost_of(upgrade_id)
 	if not can_afford(upgrade_id):
 		return false
@@ -157,16 +159,26 @@ func cost_of(upgrade_id: StringName) -> float:
 	var up := get_upgrade(upgrade_id)
 	if up == null:
 		return INF
+	if up.is_maxed(level_of(upgrade_id)):
+		return INF
 	return up.cost_at(level_of(upgrade_id))
 
 func can_afford(upgrade_id: StringName) -> bool:
 	var up := get_upgrade(upgrade_id)
 	if up == null:
 		return false
+	if up.is_maxed(level_of(upgrade_id)):
+		return false
 	var cost := cost_of(upgrade_id)
 	if up.cost_currency == &"money":
 		return money >= cost
 	return dirt >= cost
+
+func is_maxed(upgrade_id: StringName) -> bool:
+	var up := get_upgrade(upgrade_id)
+	if up == null:
+		return false
+	return up.is_maxed(level_of(upgrade_id))
 
 func get_upgrade(upgrade_id: StringName) -> Upgrade:
 	for u in upgrades:

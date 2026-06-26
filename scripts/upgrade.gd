@@ -12,15 +12,23 @@ enum Effect {
 }
 
 enum Reach {
-	CARDINAL_4,    # N/S/E/W neighbors only
-	OMNI_8,        # 8 neighbors including diagonals
-	COLUMN_DOWN,   # any broken cell in same column, below it
-	AOE_3X3,       # 3x3 area centered on click target (target must be cardinal-adjacent to broken)
+	CARDINAL_4,
+	OMNI_8,
+	COLUMN_DOWN,
+	AOE_3X3,
+}
+
+enum Category {
+	TOOLS,
+	FAMILY,
+	ARYA,
+	LAND,
 }
 
 @export var id: StringName = &""
 @export var display_name: String = ""
 @export var flavor: String = ""
+@export var category: Category = Category.TOOLS
 @export var effect: Effect = Effect.CLICK_DIRT
 @export var effect_per_level: float = 1.0
 @export var base_cost: float = 10.0
@@ -29,6 +37,12 @@ enum Reach {
 @export var unlock_money: float = 0.0
 @export var reach: Reach = Reach.CARDINAL_4
 @export var is_equippable: bool = true
+@export var max_level: int = 0  # 0 = infinite
 
 func cost_at(level: int) -> float:
 	return base_cost * pow(cost_mult, level)
+
+func is_maxed(level: int) -> bool:
+	if max_level <= 0:
+		return false
+	return level >= max_level

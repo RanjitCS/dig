@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=2 format=3 uid="uid://dig0upgrade0dadtruck"]
+
+[ext_resource type="Script" path="res://scripts/upgrade.gd" id="1_upgrade"]
+
+[resource]
+script = ExtResource("1_upgrade")
+id = &"dad_truck"
+display_name = "Dad's Pickup"
+flavor = "He said you could borrow it. The keys were on the kitchen counter."
+category = 1
+effect = 1
+effect_per_level = 0.08
+base_cost = 250.0
+cost_mult = 1.30
+cost_currency = &"money"
+unlock_money = 200.0
+reach = 0
+is_equippable = false
+max_level = 0

@@ -129,6 +129,11 @@ func _has_broken_above(pos: Vector2i) -> bool:
 # --- Click handling --------------------------------------------------------
 
 func _on_block_click_requested(block: DigBlock) -> void:
+	if GameState.day_paused:
+		return
+	if GameState.backpack_full():
+		_nudge_block(block)
+		return
 	var reach: int = GameState.equipped_reach()
 	if not is_reachable(block.grid_pos, reach):
 		_nudge_block(block)

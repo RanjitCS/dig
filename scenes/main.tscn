@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://b8dig0main0001"]
+[gd_scene load_steps=5 format=3 uid="uid://b8dig0main0001"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" uid="uid://dig0scene0digworld" path="res://scenes/dig_world.tscn" id="2_world"]
 [ext_resource type="Script" path="res://scripts/tool_selector.gd" id="3_toolsel"]
+[ext_resource type="PackedScene" uid="uid://dig0scene0endofday" path="res://scenes/end_of_day.tscn" id="4_eod"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -70,6 +71,32 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Depth: 0"
 theme_override_font_sizes/font_size = 16
+
+[node name="DayLabel" type="Label" parent="Root/TopBar/TopBarRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Day 1"
+theme_override_font_sizes/font_size = 16
+
+[node name="TimeBarBox" type="VBoxContainer" parent="Root/TopBar/TopBarRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(160, 0)
+size_flags_vertical = 4
+
+[node name="TimeLeftLabel" type="Label" parent="Root/TopBar/TopBarRow/TimeBarBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "30s"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 12
+
+[node name="TimeBar" type="ProgressBar" parent="Root/TopBar/TopBarRow/TimeBarBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 12)
+layout_mode = 2
+max_value = 30.0
+value = 30.0
+show_percentage = false
 
 [node name="ResetButton" type="Button" parent="Root/TopBar/TopBarRow"]
 unique_name_in_owner = true
@@ -145,3 +172,6 @@ modulate = Color(1, 0.92, 0.7, 1)
 unique_name_in_owner = true
 wait_time = 4.0
 one_shot = true
+
+[node name="EndOfDay" parent="." instance=ExtResource("4_eod")]
+unique_name_in_owner = true

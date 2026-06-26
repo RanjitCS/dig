@@ -3,10 +3,12 @@ extends Node
 const UPGRADE_DIR: String = "res://resources/upgrades/"
 const MILESTONE_DIR: String = "res://resources/milestones/"
 const SAVE_PATH: String = "user://save.json"
-const SAVE_VERSION: int = 1
+const SAVE_VERSION: int = 2
 const DIRT_PRICE_PER_UNIT: float = 0.10
 const AUTOSAVE_INTERVAL_SEC: float = 10.0
 const OFFLINE_PROGRESS_CAP_SEC: float = 60.0 * 60.0 * 12.0  # 12 hours
+const BASE_DAY_LENGTH_SEC: float = 30.0
+const BASE_BACKPACK_CAPACITY: float = 50.0
 
 var dirt: float = 0.0
 var money: float = 0.0
@@ -21,6 +23,12 @@ var triggered_milestones: Dictionary = {}  # StringName -> bool
 
 var equipped_id: StringName = &"spade"
 
+var current_day: int = 1
+var time_left: float = BASE_DAY_LENGTH_SEC
+var day_paused: bool = false  # true during end-of-day screen
+var day_money_earned: float = 0.0
+var day_dirt_dug: float = 0.0
+
 var _autosave_accum: float = 0.0
 var _last_saved_unix: int = 0
 
@@ -30,28 +38,62 @@ signal upgrade_purchased(upgrade_id: StringName, new_level: int)
 signal milestone_triggered(milestone: Milestone)
 signal offline_progress(seconds: float, dirt_gained: float, money_gained: float)
 signal equipped_changed(upgrade_id: StringName)
+signal day_tick(time_left: float, day_length: float)
+signal day_ended(day: int, dirt_dug: float, money_earned: float)
+signal day_started(day: int)
 
 func _ready() -> void:
 	_load_upgrades()
 	_load_milestones()
 	load_game()
+	time_left = day_length()
 	set_process(true)
+	day_started.emit(current_day)
+	day_tick.emit(time_left, day_length())
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_WM_GO_BACK_REQUEST or what == NOTIFICATION_EXIT_TREE:
 		save_game()
 
 func _process(delta: float) -> void:
-	var auto_dirt := _sum_effect(Upgrade.Effect.AUTO_DIRT_PER_SEC)
-	var auto_money := _sum_effect(Upgrade.Effect.AUTO_MONEY_PER_SEC)
-	if auto_dirt > 0.0:
-		_add_dirt(auto_dirt * delta)
-	if auto_money > 0.0:
-		_add_money(auto_money * delta)
+	if not day_paused:
+		var auto_dirt := _sum_effect(Upgrade.Effect.AUTO_DIRT_PER_SEC)
+		var auto_money := _sum_effect(Upgrade.Effect.AUTO_MONEY_PER_SEC)
+		if auto_dirt > 0.0:
+			_add_dirt(auto_dirt * delta)
+		if auto_money > 0.0:
+			_add_money(auto_money * delta)
+		time_left -= delta
+		day_tick.emit(time_left, day_length())
+		if time_left <= 0.0:
+			_end_day()
 	_autosave_accum += delta
 	if _autosave_accum >= AUTOSAVE_INTERVAL_SEC:
 		_autosave_accum = 0.0
 		save_game()
+
+func day_length() -> float:
+	return BASE_DAY_LENGTH_SEC + _sum_effect(Upgrade.Effect.DAY_LENGTH_SEC)
+
+func backpack_capacity() -> float:
+	return BASE_BACKPACK_CAPACITY + _sum_effect(Upgrade.Effect.BACKPACK_CAPACITY)
+
+func backpack_full() -> bool:
+	return dirt >= backpack_capacity()
+
+func _end_day() -> void:
+	day_paused = true
+	time_left = 0.0
+	day_ended.emit(current_day, day_dirt_dug, day_money_earned)
+
+func start_next_day() -> void:
+	current_day += 1
+	day_dirt_dug = 0.0
+	day_money_earned = 0.0
+	time_left = day_length()
+	day_paused = false
+	day_started.emit(current_day)
+	day_tick.emit(time_left, day_length())
 
 # --- Public actions -------------------------------------------------------
 
@@ -92,9 +134,18 @@ func reset_game() -> void:
 	total_money_earned = 0.0
 	upgrade_levels.clear()
 	triggered_milestones.clear()
+	current_day = 1
+	day_dirt_dug = 0.0
+	day_money_earned = 0.0
+	time_left = day_length()
+	day_paused = false
+	equipped_id = &"spade"
 	_last_saved_unix = 0
 	dirt_changed.emit(dirt)
 	money_changed.emit(money)
+	equipped_changed.emit(equipped_id)
+	day_started.emit(current_day)
+	day_tick.emit(time_left, day_length())
 	save_game()
 
 # --- Queries --------------------------------------------------------------
@@ -168,6 +219,10 @@ func save_game() -> void:
 		"upgrade_levels": levels_plain,
 		"triggered_milestones": milestones_plain,
 		"equipped_id": String(equipped_id),
+		"current_day": current_day,
+		"time_left": time_left,
+		"day_dirt_dug": day_dirt_dug,
+		"day_money_earned": day_money_earned,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f == null:
@@ -191,7 +246,7 @@ func load_game() -> void:
 		return
 	var data: Dictionary = parsed
 	if int(data.get("version", 0)) != SAVE_VERSION:
-		push_warning("Save version mismatch; starting fresh.")
+		push_warning("Save version mismatch (%d != %d); starting fresh." % [int(data.get("version", 0)), SAVE_VERSION])
 		return
 	dirt = float(data.get("dirt", 0.0))
 	money = float(data.get("money", 0.0))
@@ -208,6 +263,10 @@ func load_game() -> void:
 	_last_saved_unix = int(data.get("saved_at", 0))
 	var saved_equipped := String(data.get("equipped_id", "spade"))
 	equipped_id = StringName(saved_equipped)
+	current_day = int(data.get("current_day", 1))
+	time_left = float(data.get("time_left", day_length()))
+	day_dirt_dug = float(data.get("day_dirt_dug", 0.0))
+	day_money_earned = float(data.get("day_money_earned", 0.0))
 	dirt_changed.emit(dirt)
 	money_changed.emit(money)
 	equipped_changed.emit(equipped_id)
@@ -236,14 +295,23 @@ func _apply_offline_progress() -> void:
 # --- Internals ------------------------------------------------------------
 
 func _add_dirt(amount: float) -> void:
-	dirt += amount
-	total_dirt_dug += amount
+	if amount <= 0.0:
+		return
+	var cap := backpack_capacity()
+	var room: float = max(0.0, cap - dirt)
+	var added: float = min(amount, room)
+	dirt += added
+	total_dirt_dug += added
+	day_dirt_dug += added
 	dirt_changed.emit(dirt)
 	_check_milestones()
 
 func _add_money(amount: float) -> void:
+	if amount <= 0.0:
+		return
 	money += amount
 	total_money_earned += amount
+	day_money_earned += amount
 	money_changed.emit(money)
 	_check_milestones()
 

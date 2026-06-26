@@ -7,6 +7,8 @@ enum Effect {
 	CRIT_CHANCE,
 	AUTO_DIRT_PER_SEC,
 	AUTO_MONEY_PER_SEC,
+	DAY_LENGTH_SEC,
+	BACKPACK_CAPACITY,
 }
 
 enum Reach {

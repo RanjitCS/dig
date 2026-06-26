@@ -5,6 +5,9 @@ const UpgradeRowScene := preload("res://scenes/upgrade_row.tscn")
 @onready var dirt_label: Label = %DirtLabel
 @onready var money_label: Label = %MoneyLabel
 @onready var depth_label: Label = %DepthLabel
+@onready var day_label: Label = %DayLabel
+@onready var time_left_label: Label = %TimeLeftLabel
+@onready var time_bar: ProgressBar = %TimeBar
 @onready var upgrades_list: VBoxContainer = %UpgradesList
 @onready var toast_label: Label = %ToastLabel
 @onready var toast_timer: Timer = %ToastTimer
@@ -21,6 +24,8 @@ func _ready() -> void:
 	GameState.upgrade_purchased.connect(_on_upgrade_purchased)
 	GameState.milestone_triggered.connect(_on_milestone_triggered)
 	GameState.offline_progress.connect(_on_offline_progress)
+	GameState.day_tick.connect(_on_day_tick)
+	GameState.day_started.connect(_on_day_started)
 	dig_world.deepest_changed.connect(_on_deepest_changed)
 	toast_timer.timeout.connect(_hide_toast)
 	toast_label.visible = false
@@ -37,6 +42,8 @@ func _on_money_changed(_v: float) -> void:
 
 func _on_upgrade_purchased(_id: StringName, _lvl: int) -> void:
 	_refresh_rows()
+	_refresh_dirt()  # capacity may have changed
+	_refresh_day_bar_max()
 
 func _on_milestone_triggered(m: Milestone) -> void:
 	_show_toast("%s\n%s" % [m.title, m.body])
@@ -56,6 +63,16 @@ func _on_deepest_changed(row: int) -> void:
 		deepest_dug = row
 		_refresh_depth()
 
+func _on_day_tick(left: float, length: float) -> void:
+	if time_bar.max_value != length:
+		time_bar.max_value = length
+	time_bar.value = max(0.0, left)
+	time_left_label.text = "%ds" % int(ceil(max(0.0, left)))
+
+func _on_day_started(day: int) -> void:
+	day_label.text = "Day %d" % day
+	_refresh_day_bar_max()
+
 func _build_upgrade_rows() -> void:
 	for u in GameState.upgrades:
 		var row := UpgradeRowScene.instantiate()
@@ -68,15 +85,23 @@ func _refresh_all() -> void:
 	_refresh_money()
 	_refresh_depth()
 	_refresh_rows()
+	_refresh_day_bar_max()
+	day_label.text = "Day %d" % GameState.current_day
 
 func _refresh_dirt() -> void:
-	dirt_label.text = "Dirt: %s" % _fmt(GameState.dirt)
+	dirt_label.text = "Dirt: %s / %s" % [_fmt(GameState.dirt), _fmt(GameState.backpack_capacity())]
 
 func _refresh_money() -> void:
 	money_label.text = "$%s" % _fmt(GameState.money)
 
 func _refresh_depth() -> void:
 	depth_label.text = "Depth: %d" % deepest_dug
+
+func _refresh_day_bar_max() -> void:
+	var length := GameState.day_length()
+	time_bar.max_value = length
+	time_bar.value = max(0.0, GameState.time_left)
+	time_left_label.text = "%ds" % int(ceil(max(0.0, GameState.time_left)))
 
 func _refresh_rows() -> void:
 	for r in rows:

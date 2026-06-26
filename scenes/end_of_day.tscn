@@ -1,0 +1,84 @@
+[gd_scene load_steps=2 format=3 uid="uid://dig0scene0endofday"]
+
+[ext_resource type="Script" path="res://scripts/end_of_day.gd" id="1_eod"]
+
+[node name="EndOfDay" type="CanvasLayer"]
+layer = 10
+script = ExtResource("1_eod")
+
+[node name="Dim" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+mouse_filter = 1
+
+[node name="RootPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -320.0
+offset_top = -260.0
+offset_right = 320.0
+offset_bottom = 260.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Inner" type="VBoxContainer" parent="RootPanel"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="DayLabel" type="Label" parent="RootPanel/Inner"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "End of Day 1"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 28
+
+[node name="EarningsLabel" type="Label" parent="RootPanel/Inner"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Earned $0"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 18
+
+[node name="DirtLabel" type="Label" parent="RootPanel/Inner"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Dug 0 dirt"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 14
+modulate = Color(0.75, 0.7, 0.65, 1)
+
+[node name="Sep" type="HSeparator" parent="RootPanel/Inner"]
+layout_mode = 2
+
+[node name="UpgradesTitle" type="Label" parent="RootPanel/Inner"]
+layout_mode = 2
+text = "Buy upgrades"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 18
+
+[node name="UpgradesScroll" type="ScrollContainer" parent="RootPanel/Inner"]
+layout_mode = 2
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 280)
+
+[node name="UpgradesList" type="VBoxContainer" parent="RootPanel/Inner/UpgradesScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="ContinueButton" type="Button" parent="RootPanel/Inner"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+custom_minimum_size = Vector2(220, 44)
+text = "Sleep   →   Next Day"
+theme_override_font_sizes/font_size = 18

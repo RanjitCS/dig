@@ -163,12 +163,17 @@ func _on_block_click_requested(block: DigBlock) -> void:
 # Bypasses the click-reach rules since physical proximity is the new reach.
 func try_dig_at(grid_pos: Vector2i) -> bool:
 	if GameState.day_paused:
+		print("[world] dig refused: day_paused")
 		return false
 	if GameState.backpack_full():
+		print("[world] dig refused: backpack full (", GameState.dirt, "/", GameState.backpack_capacity(), ")")
 		return false
 	var block: DigBlock = blocks_by_pos.get(grid_pos, null)
 	if block == null:
+		print("[world] dig refused: no block at ", grid_pos)
 		return false
+	if block.block_type and block.block_type.indestructible:
+		print("[world] dig: block at ", grid_pos, " is indestructible (", block.block_type.id, ")")
 	block.hit_once()
 	return true
 

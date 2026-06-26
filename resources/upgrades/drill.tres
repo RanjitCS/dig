@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=2 format=3 uid="uid://dig0upgrade0drill"]
+
+[ext_resource type="Script" path="res://scripts/upgrade.gd" id="1_upgrade"]
+
+[resource]
+script = ExtResource("1_upgrade")
+id = &"drill"
+display_name = "Drill"
+flavor = "First time you don't have to do the work yourself."
+effect = 3
+effect_per_level = 0.5
+base_cost = 500.0
+cost_mult = 1.20
+cost_currency = &"money"
+unlock_money = 400.0

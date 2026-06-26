@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=2 format=3 uid="uid://dig0upgrade0pickaxe"]
+
+[ext_resource type="Script" path="res://scripts/upgrade.gd" id="1_upgrade"]
+
+[resource]
+script = ExtResource("1_upgrade")
+id = &"pickaxe"
+display_name = "Pickaxe"
+flavor = "First real purchase. You almost felt something."
+effect = 1
+effect_per_level = 0.10
+base_cost = 50.0
+cost_mult = 1.18
+cost_currency = &"money"
+unlock_money = 25.0

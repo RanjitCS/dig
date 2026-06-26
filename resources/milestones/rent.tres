@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="Milestone" load_steps=2 format=3 uid="uid://dig0milestone0rent"]
+
+[ext_resource type="Script" path="res://scripts/milestone.gd" id="1_milestone"]
+
+[resource]
+script = ExtResource("1_milestone")
+id = &"rent"
+title = "Paid Rent"
+body = "First time on your own. Mom didn't have to wire anything."
+trigger = 0
+threshold = 500.0

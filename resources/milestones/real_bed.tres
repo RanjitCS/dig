@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="Milestone" load_steps=2 format=3 uid="uid://dig0milestone0realbed"]
+
+[ext_resource type="Script" path="res://scripts/milestone.gd" id="1_milestone"]
+
+[resource]
+script = ExtResource("1_milestone")
+id = &"real_bed"
+title = "Real Bed"
+body = "No more couch. You forgot what your back felt like."
+trigger = 0
+threshold = 2500.0

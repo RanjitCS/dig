@@ -1,0 +1,44 @@
+[gd_scene load_steps=2 format=3 uid="uid://dig0scene0upgraderow"]
+
+[ext_resource type="Script" path="res://scripts/upgrade_row.gd" id="1_row"]
+
+[node name="UpgradeRow" type="PanelContainer"]
+offset_right = 360.0
+offset_bottom = 80.0
+size_flags_horizontal = 3
+script = ExtResource("1_row")
+
+[node name="HBox" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Info" type="VBoxContainer" parent="HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="NameLabel" type="Label" parent="HBox/Info"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Name"
+theme_override_font_sizes/font_size = 18
+
+[node name="FlavorLabel" type="Label" parent="HBox/Info"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Flavor"
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 11
+modulate = Color(0.75, 0.7, 0.65, 1)
+
+[node name="LevelLabel" type="Label" parent="HBox/Info"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Lv 0"
+theme_override_font_sizes/font_size = 12
+
+[node name="BuyButton" type="Button" parent="HBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+size_flags_vertical = 4
+text = "Buy"

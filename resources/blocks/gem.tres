@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BlockType" load_steps=2 format=3 uid="uid://dig0block0gem"]
+
+[ext_resource type="Script" path="res://scripts/block_type.gd" id="1_block"]
+
+[resource]
+script = ExtResource("1_block")
+id = &"gem"
+display_name = "Gem"
+color = Color(0.3, 0.81, 0.88, 1)
+hits_to_break = 5
+dirt_yield = 1.0
+money_yield = 200.0
+min_depth = 20
+max_depth = 99999
+weight = 0.4

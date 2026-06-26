@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BlockType" load_steps=2 format=3 uid="uid://dig0block0stone"]
+
+[ext_resource type="Script" path="res://scripts/block_type.gd" id="1_block"]
+
+[resource]
+script = ExtResource("1_block")
+id = &"stone"
+display_name = "Stone"
+color = Color(0.36, 0.36, 0.36, 1)
+hits_to_break = 3
+dirt_yield = 2.0
+money_yield = 0.0
+min_depth = 4
+max_depth = 99999
+weight = 6.0

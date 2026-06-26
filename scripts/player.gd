@@ -106,17 +106,15 @@ func _try_dig() -> void:
 
 func _dig_candidates() -> Array:
 	var world := get_parent()
-	# Sample points at the player's feet, head, and at chest-height in front.
-	# All three are nudged slightly so they land *inside* the target grid cell.
 	var feet := global_position + Vector2(0, SIZE.y * 0.5 + 4)
 	var head := global_position - Vector2(0, SIZE.y * 0.5 + 4)
 	var fwd_low := global_position + Vector2(float(_facing) * (SIZE.x * 0.5 + 4), SIZE.y * 0.25)
 	var fwd_at_floor := Vector2(global_position.x + float(_facing) * (SIZE.x * 0.5 + 4), max(global_position.y + SIZE.y * 0.4, 4.0))
+	print("  sample points: feet=", feet, " head=", head, " fwd_low=", fwd_low, " fwd_at_floor=", fwd_at_floor, " SIZE=", SIZE)
 	if Input.is_action_pressed("move_down"):
 		return [world.world_pos_to_grid(feet)]
 	if Input.is_action_pressed("move_up"):
 		return [world.world_pos_to_grid(head)]
-	# Default: forward (chest-high), then forward-at-floor, then straight down.
 	return [
 		world.world_pos_to_grid(fwd_low),
 		world.world_pos_to_grid(fwd_at_floor),

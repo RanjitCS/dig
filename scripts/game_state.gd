@@ -29,6 +29,8 @@ var day_paused: bool = false  # true during end-of-day screen
 var day_money_earned: float = 0.0
 var day_dirt_dug: float = 0.0
 
+signal world_reset_requested
+
 var _autosave_accum: float = 0.0
 var _last_saved_unix: int = 0
 
@@ -156,6 +158,7 @@ func reset_game() -> void:
 	dirt_changed.emit(dirt)
 	money_changed.emit(money)
 	equipped_changed.emit(equipped_id)
+	world_reset_requested.emit()
 	day_started.emit(current_day)
 	day_tick.emit(time_left, day_length())
 	save_game()

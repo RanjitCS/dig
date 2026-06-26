@@ -30,6 +30,16 @@ func _ready() -> void:
 	_generate_rows(ROWS_AHEAD)
 	_spawn_player_at_surface()
 	GameState.day_started.connect(_on_day_started)
+	GameState.world_reset_requested.connect(_on_world_reset)
+
+func _on_world_reset() -> void:
+	for child in grid_root.get_children():
+		child.queue_free()
+	blocks_by_pos.clear()
+	broken_cells.clear()
+	generated_rows = 0
+	_generate_rows(ROWS_AHEAD)
+	_spawn_player_at_surface()
 
 func _spawn_player_at_surface() -> void:
 	# Spawn just outside the house door (left edge of the house footprint).

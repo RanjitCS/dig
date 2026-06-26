@@ -12,6 +12,7 @@ const UpgradeRowScene := preload("res://scenes/upgrade_row.tscn")
 @onready var toast_label: Label = %ToastLabel
 @onready var toast_timer: Timer = %ToastTimer
 @onready var reset_button: Button = %ResetButton
+@onready var sell_button: Button = %SellButton
 @onready var dig_world: Control = %DigWorld
 
 var rows: Array = []
@@ -19,6 +20,7 @@ var deepest_dug: int = 0
 
 func _ready() -> void:
 	reset_button.pressed.connect(_on_reset_pressed)
+	sell_button.pressed.connect(_on_sell_pressed)
 	GameState.dirt_changed.connect(_on_dirt_changed)
 	GameState.money_changed.connect(_on_money_changed)
 	GameState.upgrade_purchased.connect(_on_upgrade_purchased)
@@ -57,6 +59,11 @@ func _on_offline_progress(seconds: float, dirt_gained: float, money_gained: floa
 func _on_reset_pressed() -> void:
 	GameState.reset_game()
 	_show_toast("Reset. Start over.")
+
+func _on_sell_pressed() -> void:
+	var earned := GameState.sell_all_dirt()
+	if earned > 0.0:
+		_show_toast("Sold dirt. +$%s" % _fmt(earned))
 
 func _on_deepest_changed(row: int) -> void:
 	if row > deepest_dug:

@@ -81,6 +81,16 @@ func backpack_capacity() -> float:
 func backpack_full() -> bool:
 	return dirt >= backpack_capacity()
 
+func sell_all_dirt() -> float:
+	if dirt <= 0.0:
+		return 0.0
+	var money_mult := 1.0 + _sum_effect(Upgrade.Effect.CLICK_MONEY_MULT)
+	var earned := dirt * DIRT_PRICE_PER_UNIT * money_mult
+	dirt = 0.0
+	dirt_changed.emit(dirt)
+	_add_money(earned)
+	return earned
+
 func _end_day() -> void:
 	day_paused = true
 	time_left = 0.0

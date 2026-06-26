@@ -13,7 +13,7 @@ var _active_path: String = ""
 func _ready() -> void:
 	_started_at_unix = int(Time.get_unix_time_from_system())
 	_open_fresh()
-	info("=== log start (unix=%d) ===" % _started_at_unix)
+	inf("=== log start (unix=%d) ===" % _started_at_unix)
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_EXIT_TREE:

@@ -154,6 +154,26 @@ func _on_block_click_requested(block: DigBlock) -> void:
 	else:
 		block.hit_once()
 
+# Player-driven dig: targeted at a specific grid cell adjacent to the player.
+# Bypasses the click-reach rules since physical proximity is the new reach.
+func try_dig_at(grid_pos: Vector2i) -> bool:
+	if GameState.day_paused:
+		return false
+	if GameState.backpack_full():
+		return false
+	var block: DigBlock = blocks_by_pos.get(grid_pos, null)
+	if block == null:
+		return false
+	block.hit_once()
+	return true
+
+func world_pos_to_grid(world_pos: Vector2) -> Vector2i:
+	# Block origins are at (col * SIZE + SIZE/2, (row-1) * SIZE + SIZE/2).
+	# Row 1 occupies y = 0 to SIZE.y; row 2 occupies SIZE.y to 2*SIZE.y; etc.
+	var col := int(floor(world_pos.x / BLOCK_SIZE.x))
+	var row := int(floor(world_pos.y / BLOCK_SIZE.y)) + 1
+	return Vector2i(col, row)
+
 func _hit_aoe(center: Vector2i) -> void:
 	for dy in [-1, 0, 1]:
 		for dx in [-1, 0, 1]:

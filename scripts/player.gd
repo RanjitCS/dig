@@ -4,12 +4,15 @@ extends CharacterBody2D
 const SIZE: Vector2 = Vector2(36, 44)
 
 @export var move_speed: float = 220.0
+@export var ground_accel: float = 2200.0      # px/s^2
+@export var ground_decel: float = 3000.0      # px/s^2 (stops on a dime)
+@export var air_accel: float = 1400.0
+@export var air_decel: float = 800.0
 @export var jump_velocity: float = -460.0
 @export var gravity: float = 1200.0
 @export var max_fall_speed: float = 900.0
 @export var coyote_time: float = 0.10
 @export var jump_buffer_time: float = 0.10
-@export var air_control: float = 0.85  # 1.0 = full control in air
 
 @onready var sprite: Sprite2D = $Sprite
 @onready var fallback_rect: ColorRect = $FallbackRect
@@ -41,11 +44,14 @@ func _physics_process(delta: float) -> void:
 		if new_facing != _facing:
 			_facing = new_facing
 			facing_changed.emit(_facing)
-	var accel: float = move_speed if is_on_floor() else move_speed * air_control
+	var on_floor := is_on_floor()
+	var target_x := input_x * move_speed
+	var rate := 0.0
 	if input_x != 0.0:
-		velocity.x = lerp(velocity.x, input_x * move_speed, accel * delta / move_speed)
+		rate = ground_accel if on_floor else air_accel
 	else:
-		velocity.x = lerp(velocity.x, 0.0, accel * delta / move_speed)
+		rate = ground_decel if on_floor else air_decel
+	velocity.x = move_toward(velocity.x, target_x, rate * delta)
 
 	# --- gravity ---
 	if not is_on_floor():
@@ -75,6 +81,30 @@ func _physics_process(delta: float) -> void:
 		velocity.y *= 0.45
 
 	move_and_slide()
+
+	# --- dig action ---
+	if Input.is_action_just_pressed("dig"):
+		_try_dig()
+
+func _try_dig() -> void:
+	var world := get_parent()
+	if world == null or not world.has_method("try_dig_at"):
+		return
+	var target := _dig_target_grid()
+	world.try_dig_at(target)
+
+func _dig_target_grid() -> Vector2i:
+	# Pick a grid cell adjacent to the player based on input direction.
+	# Priority: down > up > forward.
+	var feet := global_position + Vector2(0, SIZE.y * 0.5 + 2)
+	var head := global_position - Vector2(0, SIZE.y * 0.5 + 2)
+	var forward := global_position + Vector2(float(_facing) * (SIZE.x * 0.5 + 4), 0)
+	var world := get_parent()
+	if Input.is_action_pressed("move_down"):
+		return world.world_pos_to_grid(feet)
+	if Input.is_action_pressed("move_up"):
+		return world.world_pos_to_grid(head)
+	return world.world_pos_to_grid(forward)
 
 func facing_dir() -> int:
 	return _facing

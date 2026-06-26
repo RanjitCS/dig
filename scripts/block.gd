@@ -1,9 +1,9 @@
-class_name Block
+class_name DigBlock
 extends Control
 
 const SIZE: Vector2 = Vector2(48, 48)
 
-signal broken(block: Block)
+signal broken(block: DigBlock)
 
 var block_type: BlockType
 var hits_remaining: int = 0
@@ -19,8 +19,14 @@ func setup(type: BlockType, pos: Vector2i) -> void:
 	custom_minimum_size = SIZE
 	size = SIZE
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	if is_node_ready():
+		_apply_visuals()
 
 func _ready() -> void:
+	if block_type != null:
+		_apply_visuals()
+
+func _apply_visuals() -> void:
 	rect.color = block_type.color
 	rect.size = SIZE
 	_update_crack()
@@ -32,6 +38,8 @@ func _gui_input(event: InputEvent) -> void:
 			_hit()
 
 func _hit() -> void:
+	if block_type == null:
+		return
 	var click_dirt_bonus := GameState._sum_effect(Upgrade.Effect.CLICK_DIRT)
 	var dmg: int = 1 + int(click_dirt_bonus)
 	hits_remaining -= dmg
@@ -54,13 +62,12 @@ func _apply_yields_and_break() -> void:
 	queue_free()
 
 func _update_crack() -> void:
-	if block_type.hits_to_break <= 1:
+	if block_type == null or block_type.hits_to_break <= 1:
 		crack_label.text = ""
 		return
 	crack_label.text = "%d" % hits_remaining
 
 func _flash() -> void:
-	var original := rect.color
 	rect.modulate = Color(1.4, 1.4, 1.4)
 	var tw := create_tween()
 	tw.tween_property(rect, "modulate", Color(1, 1, 1), 0.12)

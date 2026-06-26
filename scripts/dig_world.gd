@@ -47,10 +47,10 @@ func _generate_row(row: int) -> void:
 		var type := _pick_block_type_for_depth(row)
 		if type == null:
 			continue
-		var block: Block = BlockScene.instantiate()
-		grid.add_child(block)
+		var block: DigBlock = BlockScene.instantiate()
 		block.setup(type, Vector2i(col, row))
-		block.position = Vector2(col * Block.SIZE.x, (row - 1) * Block.SIZE.y)
+		block.position = Vector2(col * DigBlock.SIZE.x, (row - 1) * DigBlock.SIZE.y)
+		grid.add_child(block)
 		block.broken.connect(_on_block_broken)
 		blocks_by_pos[Vector2i(col, row)] = block
 
@@ -71,7 +71,7 @@ func _pick_block_type_for_depth(depth: int) -> BlockType:
 			return t
 	return candidates[candidates.size() - 1]
 
-func _on_block_broken(block: Block) -> void:
+func _on_block_broken(block: DigBlock) -> void:
 	blocks_by_pos.erase(block.grid_pos)
 	_maybe_extend_world(block.grid_pos.y)
 

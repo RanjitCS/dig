@@ -5,7 +5,8 @@ const MILESTONE_DIR: String = "res://resources/milestones/"
 const BLOCK_DIR: String = "res://resources/blocks/"
 const CUTSCENE_DIR: String = "res://resources/cutscenes/"
 const SAVE_PATH: String = "user://save.json"
-const SAVE_VERSION: int = 6
+const SAVE_VERSION: int = 7
+const DEFAULT_ROOM: StringName = &"bedroom"
 
 enum Phase { HOUSE_INTERIOR, DIGGING, END_OF_DAY }
 const DIRT_PRICE_PER_UNIT: float = 0.10
@@ -39,6 +40,7 @@ var current_day: int = 1
 var time_left: float = BASE_DAY_LENGTH_SEC
 var day_paused: bool = false  # true during end-of-day screen
 var phase: Phase = Phase.HOUSE_INTERIOR
+var current_room: StringName = DEFAULT_ROOM
 
 # Last-day loss summary, read by the end-of-day modal.
 var last_day_lost_dirt: float = 0.0
@@ -49,6 +51,7 @@ var day_dirt_dug: float = 0.0
 signal world_reset_requested
 signal phase_changed(new_phase: Phase)
 signal cutscene_triggered(scene: Cutscene)
+signal room_changed(new_room: StringName, spawn_x: float)
 
 var _autosave_accum: float = 0.0
 var _last_saved_unix: int = 0
@@ -128,6 +131,11 @@ func set_phase(new_phase: Phase) -> void:
 		return
 	phase = new_phase
 	phase_changed.emit(phase)
+
+func set_room(room_id: StringName, spawn_x: float = NAN) -> void:
+	# Switches the active house room. spawn_x = NAN means "use the room's default spawn".
+	current_room = room_id
+	room_changed.emit(current_room, spawn_x)
 
 func start_digging() -> void:
 	# Called when the player leaves the house. If we were paused (end-of-day),
@@ -258,6 +266,7 @@ func start_next_day() -> void:
 	day_paused = false
 	# Day begins in the bedroom; player must walk out the door to begin digging.
 	set_phase(Phase.HOUSE_INTERIOR)
+	set_room(DEFAULT_ROOM, NAN)
 	day_started.emit(current_day)
 	day_tick.emit(time_left, day_length())
 	_check_cutscenes()
@@ -318,6 +327,7 @@ func reset_game() -> void:
 	day_paused = false
 	equipped_id = &"spade"
 	phase = Phase.HOUSE_INTERIOR
+	current_room = DEFAULT_ROOM
 	_last_saved_unix = 0
 	dirt_changed.emit(dirt)
 	money_changed.emit(money)
@@ -325,6 +335,7 @@ func reset_game() -> void:
 	carried_changed.emit()
 	deposited_changed.emit(deposited_dirt)
 	phase_changed.emit(phase)
+	room_changed.emit(current_room, NAN)
 	world_reset_requested.emit()
 	day_started.emit(current_day)
 	day_tick.emit(time_left, day_length())
@@ -419,6 +430,7 @@ func save_game() -> void:
 		"triggered_cutscenes": cutscenes_plain,
 		"equipped_id": String(equipped_id),
 		"phase": int(phase),
+		"current_room": String(current_room),
 		"current_day": current_day,
 		"time_left": time_left,
 		"day_dirt_dug": day_dirt_dug,
@@ -471,6 +483,7 @@ func load_game() -> void:
 	var saved_equipped := String(data.get("equipped_id", "spade"))
 	equipped_id = StringName(saved_equipped)
 	phase = data.get("phase", Phase.HOUSE_INTERIOR) as Phase
+	current_room = StringName(String(data.get("current_room", String(DEFAULT_ROOM))))
 	current_day = int(data.get("current_day", 1))
 	time_left = float(data.get("time_left", day_length()))
 	day_dirt_dug = float(data.get("day_dirt_dug", 0.0))

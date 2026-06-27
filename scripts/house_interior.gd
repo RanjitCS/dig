@@ -1,7 +1,10 @@
 extends Node2D
 
-# Bedroom (currently the only room). Owns the player while phase == HOUSE_INTERIOR.
-# Future rooms will hook into a room-switch system via doors.
+# Bedroom. Active when phase == HOUSE_INTERIOR AND current_room == &"bedroom".
+# Specialized logic: bed (sleep), tool wall, door to corridor.
+
+const ROOM_ID: StringName = &"bedroom"
+const DEFAULT_SPAWN_X: float = 160.0
 
 @onready var player: Player = $Player
 @onready var camera: Camera2D = $Player/Camera2D
@@ -29,6 +32,7 @@ func _ready() -> void:
 		hook.interacted.connect(_on_tool_hook_used.bind(tool_id))
 	GameState.equipped_changed.connect(_on_equipped_changed)
 	GameState.phase_changed.connect(_on_phase_changed)
+	GameState.room_changed.connect(_on_room_changed)
 	GameState.money_changed.connect(_on_money_changed)
 	GameState.upgrade_purchased.connect(_on_upgrade_purchased)
 	GameState.cutscene_triggered.connect(_on_cutscene_started)
@@ -89,12 +93,23 @@ func _refresh_hook_visibility() -> void:
 			(v as CanvasItem).visible = unlocked
 
 func _initial_phase_check() -> void:
-	_on_phase_changed(GameState.phase)
+	_apply_visibility()
 
-func activate() -> void:
-	_reset_player_to_bed_spawn()
+func _apply_visibility() -> void:
+	var should_show: bool = (
+		GameState.phase == GameState.Phase.HOUSE_INTERIOR
+		and GameState.current_room == ROOM_ID
+	)
+	if should_show:
+		activate(NAN)
+	else:
+		deactivate()
+
+func activate(spawn_x: float = NAN) -> void:
 	visible = true
 	process_mode = Node.PROCESS_MODE_INHERIT
+	var x: float = DEFAULT_SPAWN_X if is_nan(spawn_x) else spawn_x
+	player.reset_to(Vector2(x, -24))
 	if camera != null:
 		camera.make_current()
 
@@ -103,7 +118,7 @@ func deactivate() -> void:
 	process_mode = Node.PROCESS_MODE_DISABLED
 
 func _reset_player_to_bed_spawn() -> void:
-	player.reset_to(Vector2(160, -24))
+	player.reset_to(Vector2(DEFAULT_SPAWN_X, -24))
 
 func _on_bed_used() -> void:
 	GameState.skip_to_end_of_day()
@@ -117,9 +132,14 @@ func _on_tool_hook_used(tool_id: StringName) -> void:
 func _on_equipped_changed(_id: StringName) -> void:
 	_refresh_equipped_label()
 
-func _on_phase_changed(p: int) -> void:
-	if p == GameState.Phase.HOUSE_INTERIOR:
-		activate()
+func _on_phase_changed(_p: int) -> void:
+	_apply_visibility()
+
+func _on_room_changed(new_room: StringName, spawn_x: float) -> void:
+	if GameState.phase != GameState.Phase.HOUSE_INTERIOR:
+		return
+	if new_room == ROOM_ID:
+		activate(spawn_x)
 	else:
 		deactivate()
 

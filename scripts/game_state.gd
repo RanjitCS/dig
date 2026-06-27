@@ -77,8 +77,12 @@ func _ready() -> void:
 	phase_changed.emit(phase)
 	day_started.emit(current_day)
 	day_tick.emit(time_left, day_length())
-	# Defer first cutscene check so scene listeners (modal) have time to connect.
-	call_deferred("_check_cutscenes")
+	# Note: do NOT call _check_cutscenes() here. The modal isn't connected yet
+	# during autoload _ready. The modal calls check_pending_cutscenes() itself
+	# after it's set up its listener.
+
+func check_pending_cutscenes() -> void:
+	_check_cutscenes()
 
 func _load_ore_prices() -> void:
 	ore_prices.clear()

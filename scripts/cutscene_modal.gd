@@ -23,6 +23,13 @@ func _ready() -> void:
 	fast_button.pressed.connect(_on_fast)
 	skip_button.pressed.connect(_on_skip)
 	GameState.cutscene_triggered.connect(_on_cutscene_triggered)
+	# Now that we're listening, ask GameState to fire any pending cutscene
+	# (Day 1 on first launch, etc.). Deferred so other scene-tree nodes
+	# also get a chance to connect first.
+	call_deferred("_request_pending_check")
+
+func _request_pending_check() -> void:
+	GameState.check_pending_cutscenes()
 
 func is_active() -> bool:
 	return _active

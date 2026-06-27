@@ -36,7 +36,8 @@ func refresh() -> void:
 		buy_button.disabled = true
 	else:
 		var cost := GameState.cost_of(upgrade.id)
-		buy_button.text = "Buy  •  %s%s" % [currency, _fmt(cost)]
+		var verb: String = "Upgrade" if lvl >= 1 else "Buy"
+		buy_button.text = "%s  •  %s%s" % [verb, currency, _fmt(cost)]
 		buy_button.disabled = not GameState.can_afford(upgrade.id)
 	visible = GameState.is_unlocked(upgrade.id)
 

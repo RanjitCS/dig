@@ -226,15 +226,15 @@ func _hit_single(block: DigBlock, damage: int) -> void:
 	block.hit_n(damage)
 
 func _hit_area(center: Vector2i, damage: int) -> void:
-	for dy in [-1, 0, 1]:
-		for dx in [-1, 0, 1]:
-			var p: Vector2i = center + Vector2i(dx, dy)
-			var b: DigBlock = blocks_by_pos.get(p, null)
-			if b == null:
-				continue
-			if b.block_type and b.block_type.indestructible:
-				continue
-			b.hit_n(damage)
+	# Row-only AoE: center + left + right (no vertical spread).
+	for dx in [-1, 0, 1]:
+		var p: Vector2i = center + Vector2i(dx, 0)
+		var b: DigBlock = blocks_by_pos.get(p, null)
+		if b == null:
+			continue
+		if b.block_type and b.block_type.indestructible:
+			continue
+		b.hit_n(damage)
 
 func world_pos_to_grid(world_pos: Vector2) -> Vector2i:
 	# Block origins are at (col * SIZE + SIZE/2, (row-1) * SIZE + SIZE/2).

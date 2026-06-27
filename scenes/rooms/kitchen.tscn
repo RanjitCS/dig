@@ -54,18 +54,19 @@ theme_override_colors/font_color = Color(0.85, 0.78, 0.72, 1)
 mouse_filter = 2
 
 [node name="DoorToLiving" parent="." instance=ExtResource("3_door")]
-position = Vector2(120, -50)
+position = Vector2(120, -48)
 prompt_text = "[E] living room"
 target_room_id = &"living_room"
-spawn_x = 1500.0
+spawn_x = 1550.0
 
 [node name="DoorToWorkshop" parent="." instance=ExtResource("3_door")]
-position = Vector2(800, -50)
+position = Vector2(800, -48)
 prompt_text = "[E] workshop"
 target_room_id = &"workshop"
+spawn_x = 200.0
 
 [node name="DoorToBackyard" parent="." instance=ExtResource("3_door")]
-position = Vector2(1500, -50)
+position = Vector2(1500, -48)
 prompt_text = "[E] backyard"
 target_room_id = &"backyard"
 

@@ -4,12 +4,18 @@ extends PanelContainer
 @onready var skip_button: Button = $Box/SkipButton
 @onready var unlock_button: Button = $Box/UnlockButton
 @onready var fill_button: Button = $Box/FillButton
+@onready var dig_button: Button = $Box/DigButton
 
 func _ready() -> void:
 	money_button.pressed.connect(_on_money)
 	skip_button.pressed.connect(_on_skip)
 	unlock_button.pressed.connect(_on_unlock)
 	fill_button.pressed.connect(_on_fill)
+	dig_button.pressed.connect(_on_go_dig)
+
+func _on_go_dig() -> void:
+	# Skip the walk through the house and jump straight to digging.
+	GameState.set_phase(GameState.Phase.DIGGING)
 
 func _on_money() -> void:
 	# Route through _add_money so milestones, totals, and signals all update correctly.

@@ -2,10 +2,13 @@ extends Node2D
 
 const BlockScene := preload("res://scenes/block.tscn")
 const GRID_COLS: int = 32
+# Layout: house on the LEFT, deposit station in the middle, dig strip on the RIGHT.
+# This matches the in-house walking direction: bedroom -> ... -> kitchen -> back door
+# exits the player on the RIGHT side of the house, then they walk RIGHT into the yard.
+const HOUSE_COL_START: int = 2
+const HOUSE_COL_END: int = 7
 const DIG_STRIP_START: int = 12  # inclusive
 const DIG_STRIP_END: int = 19    # inclusive (cols 12..19 = 8 wide)
-const HOUSE_COL_START: int = 24  # cols 24..29 reserved for house footprint
-const HOUSE_COL_END: int = 29
 const ROWS_AHEAD: int = 30
 const BLOCK_DIR: String = "res://resources/blocks/"
 const BLOCK_SIZE: Vector2 = Vector2(48, 48)
@@ -69,8 +72,9 @@ func _regenerate_world() -> void:
 	_spawn_player_at_surface()
 
 func _spawn_player_at_surface() -> void:
-	# Spawn just outside the house door (left edge of the house footprint).
-	var door_x := float(HOUSE_COL_START) * BLOCK_SIZE.x - BLOCK_SIZE.x * 0.5
+	# House is on the LEFT; spawn just to the right of its right edge so the
+	# player has stepped out the back door and faces the yard.
+	var door_x := float(HOUSE_COL_END + 1) * BLOCK_SIZE.x + BLOCK_SIZE.x * 0.5
 	player.reset_to(Vector2(door_x, -24))
 
 func _on_day_started(day: int) -> void:

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="Milestone" load_steps=2 format=3 uid="uid://dig0milestone0firsthundredk"]
+
+[ext_resource type="Script" path="res://scripts/milestone.gd" id="1_milestone"]
+
+[resource]
+script = ExtResource("1_milestone")
+id = &"first_hundred_k"
+title = "Six Figures"
+body = "Sister cracked a beer with mom. Dad was already asleep."
+trigger = 0
+threshold = 100000.0
+reward_effect = 6
+reward_amount = 25.0
+reward_text = "+25 backpack capacity"

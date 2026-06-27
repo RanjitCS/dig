@@ -73,7 +73,13 @@ func _on_upgrade_purchased(_id: StringName, _lvl: int) -> void:
 	_refresh_day_bar_max()
 
 func _on_milestone_triggered(m: Milestone) -> void:
-	_show_toast("%s\n%s" % [m.title, m.body])
+	var text := "%s\n%s" % [m.title, m.body]
+	if m.reward_text != "":
+		text += "\n%s" % m.reward_text
+	_show_toast(text)
+	# Refresh any UI that depends on cumulative effects (capacity, day length).
+	_refresh_dirt()
+	_refresh_day_bar_max()
 
 func _on_offline_progress(seconds: float, dirt_gained: float, money_gained: float) -> void:
 	if dirt_gained <= 0.0 and money_gained <= 0.0:

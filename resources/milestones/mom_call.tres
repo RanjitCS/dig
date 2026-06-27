@@ -5,7 +5,10 @@
 [resource]
 script = ExtResource("1_milestone")
 id = &"mom_call"
-title = "Mom Stopped Asking"
-body = "About a real job, anyway. She still calls."
+title = "Mom Stops Asking"
+body = "About a real job, anyway. She still calls. The line goes quiet now."
 trigger = 0
-threshold = 10000.0
+threshold = 1000.0
+reward_effect = 6
+reward_amount = 10.0
+reward_text = "+10 backpack capacity"

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="Milestone" load_steps=2 format=3 uid="uid://dig0milestone0sisterfiles"]
+
+[ext_resource type="Script" path="res://scripts/milestone.gd" id="1_milestone"]
+
+[resource]
+script = ExtResource("1_milestone")
+id = &"sister_files"
+title = "Filed With The State"
+body = "Sister signed twelve forms. Two of them were yours. She didn't explain."
+trigger = 0
+threshold = 25000.0
+reward_effect = 1
+reward_amount = 0.10
+reward_text = "+10% sale value"

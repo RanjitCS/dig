@@ -5,7 +5,10 @@
 [resource]
 script = ExtResource("1_milestone")
 id = &"first_dollar"
-title = "First Dollar"
-body = "Not bad for a dropout."
+title = "Ten Bucks"
+body = "Mom left a glass of water by the porch. She didn't say anything."
 trigger = 0
-threshold = 1.0
+threshold = 10.0
+reward_effect = 5
+reward_amount = 5.0
+reward_text = "+5 sec day length"

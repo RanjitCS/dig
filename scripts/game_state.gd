@@ -518,6 +518,15 @@ func _sum_effect(effect: Upgrade.Effect) -> float:
 	for u in upgrades:
 		if u.effect == effect:
 			total += u.effect_per_level * float(level_of(u.id))
+	# Achievement-style permanent buffs from triggered milestones.
+	for m in milestones:
+		if m.reward_amount == 0.0:
+			continue
+		if m.reward_effect != effect:
+			continue
+		if not triggered_milestones.get(m.id, false):
+			continue
+		total += m.reward_amount
 	return total
 
 func _load_upgrades() -> void:

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="Milestone" load_steps=2 format=3 uid="uid://dig0milestone0dadsworkshop"]
+
+[ext_resource type="Script" path="res://scripts/milestone.gd" id="1_milestone"]
+
+[resource]
+script = ExtResource("1_milestone")
+id = &"dads_workshop"
+title = "Dad's Workshop"
+body = "He cleared out the garage. There's a new bench. He keeps the dust off it."
+trigger = 0
+threshold = 5000.0
+reward_effect = 5
+reward_amount = 15.0
+reward_text = "+15 sec day length"

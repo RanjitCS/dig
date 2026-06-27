@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="Milestone" load_steps=2 format=3 uid="uid://dig0milestone0aryafirst"]
+
+[ext_resource type="Script" path="res://scripts/milestone.gd" id="1_milestone"]
+
+[resource]
+script = ExtResource("1_milestone")
+id = &"arya_first_visit"
+title = "Arya Stops By"
+body = "She looked at the hole for a long time. \"I'm going to be a geologist. Be back soon.\""
+trigger = 0
+threshold = 500.0
+reward_effect = 1
+reward_amount = 0.05
+reward_text = "+5% sale value"

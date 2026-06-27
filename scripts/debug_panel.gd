@@ -12,10 +12,8 @@ func _ready() -> void:
 	fill_button.pressed.connect(_on_fill)
 
 func _on_money() -> void:
-	# +$1000 and count it as earned so unlock thresholds advance.
-	GameState.money += 1000.0
-	GameState.total_money_earned += 1000.0
-	GameState.money_changed.emit(GameState.money)
+	# Route through _add_money so milestones, totals, and signals all update correctly.
+	GameState._add_money(1000.0)
 
 func _on_skip() -> void:
 	# Force the day to end immediately, going through the normal pipe.
@@ -26,9 +24,9 @@ func _on_skip() -> void:
 		GameState.skip_to_end_of_day()
 
 func _on_unlock() -> void:
-	# Big total_money_earned so every upgrade unlocks.
+	# Big total_money_earned so every upgrade unlocks. Trigger milestone checks too.
 	GameState.total_money_earned = max(GameState.total_money_earned, 1e9)
-	# Re-emit money_changed so listeners refresh visibility (bedroom tool hooks).
+	GameState._check_milestones()
 	GameState.money_changed.emit(GameState.money)
 
 func _on_fill() -> void:

@@ -35,6 +35,10 @@ var current_day: int = 1
 var time_left: float = BASE_DAY_LENGTH_SEC
 var day_paused: bool = false  # true during end-of-day screen
 var phase: Phase = Phase.HOUSE_INTERIOR
+
+# Last-day loss summary, read by the end-of-day modal.
+var last_day_lost_dirt: float = 0.0
+var last_day_lost_ore_count: int = 0
 var day_money_earned: float = 0.0
 var day_dirt_dug: float = 0.0
 
@@ -220,16 +224,15 @@ func _end_day() -> void:
 	day_paused = true
 	time_left = 0.0
 	# Carried inventory is LOST if you didn't make it back to deposit in time.
-	# Real punishment for getting stuck underground when the timer runs out.
-	var lost_dirt: float = dirt
-	var lost_ore_count: int = carried_ore_count()
-	if lost_dirt > 0.0 or lost_ore_count > 0:
+	# Stash the amounts for the end-of-day modal to display.
+	last_day_lost_dirt = dirt
+	last_day_lost_ore_count = carried_ore_count()
+	if last_day_lost_dirt > 0.0 or last_day_lost_ore_count > 0:
 		dirt = 0.0
 		carried_ore.clear()
 		dirt_changed.emit(dirt)
 		carried_changed.emit()
-		if lost_dirt > 0.0 or lost_ore_count > 0:
-			carried_lost.emit(lost_dirt, lost_ore_count)
+		carried_lost.emit(last_day_lost_dirt, last_day_lost_ore_count)
 	set_phase(Phase.END_OF_DAY)
 	day_ended.emit(current_day, day_dirt_dug, day_money_earned)
 
@@ -237,6 +240,8 @@ func start_next_day() -> void:
 	current_day += 1
 	day_dirt_dug = 0.0
 	day_money_earned = 0.0
+	last_day_lost_dirt = 0.0
+	last_day_lost_ore_count = 0
 	time_left = day_length()
 	day_paused = false
 	# Day begins in the bedroom; player must walk out the door to begin digging.

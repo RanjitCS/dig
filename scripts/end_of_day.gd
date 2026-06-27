@@ -19,6 +19,7 @@ const CATEGORY_ORDER := [
 @onready var day_label: Label = %DayLabel
 @onready var earnings_label: Label = %EarningsLabel
 @onready var dirt_label: Label = %DirtLabel
+@onready var lost_label: Label = %LostLabel
 @onready var pile_label: Label = %PileLabel
 @onready var sell_pile_button: Button = %SellPileButton
 @onready var upgrades_list: VBoxContainer = %UpgradesList
@@ -42,9 +43,25 @@ func _on_day_ended(day: int, dirt_dug: float, money_earned: float) -> void:
 	day_label.text = "End of Day %d" % day
 	earnings_label.text = "Earned $%s" % _fmt(money_earned)
 	dirt_label.text = "Dug %s dirt" % _fmt(dirt_dug)
+	_refresh_lost_label()
 	_refresh_rows()
 	_refresh_pile_row()
 	visible = true
+
+func _refresh_lost_label() -> void:
+	var lost_dirt: float = GameState.last_day_lost_dirt
+	var lost_ore: int = GameState.last_day_lost_ore_count
+	if lost_dirt <= 0.0 and lost_ore <= 0:
+		lost_label.visible = false
+		lost_label.text = ""
+		return
+	var parts: Array = []
+	if lost_dirt > 0.0:
+		parts.append("%s dirt" % _fmt(lost_dirt))
+	if lost_ore > 0:
+		parts.append("%d ore" % lost_ore)
+	lost_label.text = "Stranded in the hole: lost %s." % ", ".join(parts)
+	lost_label.visible = true
 
 func _on_day_started(_day: int) -> void:
 	visible = false

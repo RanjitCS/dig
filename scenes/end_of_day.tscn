@@ -55,6 +55,15 @@ horizontal_alignment = 1
 theme_override_font_sizes/font_size = 14
 modulate = Color(0.75, 0.7, 0.65, 1)
 
+[node name="LostLabel" type="Label" parent="RootPanel/Inner"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 13
+modulate = Color(0.85, 0.55, 0.50, 1)
+visible = false
+
 [node name="PileRow" type="HBoxContainer" parent="RootPanel/Inner"]
 layout_mode = 2
 alignment = 1

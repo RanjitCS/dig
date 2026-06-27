@@ -15,6 +15,7 @@ extends Control
 
 var deepest_dug: int = 0
 var _last_pile: float = 0.0
+var _toast_queue: Array[String] = []
 
 func _ready() -> void:
 	reset_button.pressed.connect(_on_reset_pressed)
@@ -29,7 +30,6 @@ func _ready() -> void:
 	GameState.day_ended.connect(_on_day_ended_for_sell)
 	GameState.deposited_changed.connect(_on_deposited_changed)
 	GameState.carried_changed.connect(_on_carried_changed)
-	GameState.carried_lost.connect(_on_carried_lost)
 	GameState.phase_changed.connect(_on_phase_changed)
 	dig_world.deepest_changed.connect(_on_deepest_changed)
 	toast_timer.timeout.connect(_hide_toast)
@@ -46,16 +46,6 @@ func _on_dirt_changed(_v: float) -> void:
 func _on_carried_changed() -> void:
 	_refresh_dirt()
 	_refresh_sell_button()
-
-func _on_carried_lost(lost_dirt: float, lost_ore_count: int) -> void:
-	var parts: Array = []
-	if lost_dirt > 0.0:
-		parts.append("%s dirt" % _fmt(lost_dirt))
-	if lost_ore_count > 0:
-		parts.append("%d ore" % lost_ore_count)
-	if parts.is_empty():
-		return
-	_show_toast("Day ended.\nLost %s in your pack." % ", ".join(parts))
 
 func _on_deposited_changed(v: float) -> void:
 	var diff: float = v - _last_pile
@@ -170,13 +160,33 @@ func _refresh_day_bar_max() -> void:
 	time_left_label.text = "%ds" % int(ceil(max(0.0, GameState.time_left)))
 
 func _show_toast(text: String) -> void:
+	# Queue toasts so each milestone gets its own moment.
+	if toast_label.visible:
+		_toast_queue.append(text)
+		return
 	toast_label.text = text
 	toast_label.visible = true
 	toast_timer.stop()
+	toast_timer.wait_time = _toast_duration_for_queue()
 	toast_timer.start()
 
 func _hide_toast() -> void:
+	if not _toast_queue.is_empty():
+		var next: String = _toast_queue.pop_front()
+		toast_label.text = next
+		toast_timer.wait_time = _toast_duration_for_queue()
+		toast_timer.start()
+		return
 	toast_label.visible = false
+
+func _toast_duration_for_queue() -> float:
+	# Shorter toasts when a queue is backed up so the player isn't watching toasts forever.
+	var pending: int = _toast_queue.size()
+	if pending == 0:
+		return 4.0
+	if pending <= 2:
+		return 3.0
+	return 2.0
 
 func _fmt_duration(seconds: float) -> String:
 	var s := int(seconds)

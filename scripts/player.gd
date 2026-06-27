@@ -97,15 +97,17 @@ func _try_dig(tool: Upgrade) -> bool:
 	if world == null or not world.has_method("try_dig_at"):
 		return false
 	var damage: int = tool.tool_damage if tool != null else 1
-	var aoe: bool = tool != null and tool.tool_aoe
 	var column_only: bool = tool != null and tool.tool_column_only
 	# Drill: always target the cell at the player's feet, no direction needed.
 	if column_only:
 		var feet_cell: Vector2i = world.world_pos_to_grid(global_position + Vector2(0, SIZE.y * 0.5 + 4))
 		return world.try_dig_at(feet_cell, damage, false)
-	# Other tools: candidate fallback chain.
+	# AoE only triggers when the player aims DOWN (S+Z) on an AoE-capable tool.
+	# Future tool tiers may flip on AoE for other directions.
+	var aoe_capable: bool = tool != null and tool.tool_aoe
+	var aoe_this_swing: bool = aoe_capable and Input.is_action_pressed("move_down")
 	for target in _dig_candidates():
-		if world.try_dig_at(target, damage, aoe):
+		if world.try_dig_at(target, damage, aoe_this_swing):
 			return true
 	return false
 

@@ -4,6 +4,7 @@ extends Node2D
 # Future rooms will hook into a room-switch system via doors.
 
 @onready var player: Player = $Player
+@onready var camera: Camera2D = $Player/Camera2D
 @onready var bed: Interactable = $Bed
 @onready var door: Interactable = $Door
 @onready var tool_hooks: Node2D = $ToolHooks
@@ -36,6 +37,8 @@ func activate() -> void:
 	_reset_player_to_bed_spawn()
 	visible = true
 	process_mode = Node.PROCESS_MODE_INHERIT
+	if camera != null:
+		camera.make_current()
 
 func deactivate() -> void:
 	visible = false

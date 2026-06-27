@@ -14,6 +14,7 @@ const SURFACE_HEIGHT_PX: float = 96.0
 @onready var surface_visual: Node2D = $Surface
 @onready var grid_root: Node2D = $Grid
 @onready var player: Player = $Player
+@onready var camera: Camera2D = $Player/Camera2D
 
 var block_types: Array[BlockType] = []
 var bedrock_type: BlockType
@@ -39,6 +40,8 @@ func activate() -> void:
 	visible = true
 	process_mode = Node.PROCESS_MODE_INHERIT
 	_spawn_player_at_surface()
+	if camera != null:
+		camera.make_current()
 
 func deactivate() -> void:
 	visible = false

@@ -1,5 +1,8 @@
 extends CanvasLayer
 
+signal cutscene_started
+signal cutscene_finished
+
 const TYPE_SPEED_CPS: float = 40.0  # characters per second
 
 @onready var title_label: Label = %TitleLabel
@@ -11,6 +14,7 @@ const TYPE_SPEED_CPS: float = 40.0  # characters per second
 var _full_body: String = ""
 var _revealed_chars: float = 0.0
 var _is_typing: bool = false
+var _active: bool = false
 
 func _ready() -> void:
 	visible = false
@@ -19,17 +23,21 @@ func _ready() -> void:
 	skip_button.pressed.connect(_on_skip)
 	GameState.cutscene_triggered.connect(_on_cutscene_triggered)
 
+func is_active() -> bool:
+	return _active
+
 func _on_cutscene_triggered(scene: Cutscene) -> void:
+	print("[cutscene-modal] received: ", scene.id, " title='", scene.title, "'")
 	title_label.text = scene.title
 	_full_body = scene.body
-	body_label.text = ""
+	body_label.text = _full_body
 	body_label.visible_characters = 0
 	_revealed_chars = 0.0
 	_is_typing = true
 	continue_button.disabled = true
+	_active = true
 	visible = true
-	body_label.text = _full_body
-	body_label.visible_characters = 0
+	cutscene_started.emit()
 
 func _process(delta: float) -> void:
 	if not _is_typing:
@@ -50,8 +58,13 @@ func _on_fast() -> void:
 	continue_button.disabled = false
 
 func _on_continue() -> void:
-	visible = false
+	_close()
 
 func _on_skip() -> void:
 	# Close without finishing the read. Cutscene is already marked triggered.
+	_close()
+
+func _close() -> void:
+	_active = false
 	visible = false
+	cutscene_finished.emit()

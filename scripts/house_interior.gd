@@ -31,12 +31,28 @@ func _ready() -> void:
 	GameState.phase_changed.connect(_on_phase_changed)
 	GameState.money_changed.connect(_on_money_changed)
 	GameState.upgrade_purchased.connect(_on_upgrade_purchased)
+	GameState.cutscene_triggered.connect(_on_cutscene_started)
+	call_deferred("_connect_cutscene_finish")
 	_refresh_equipped_label()
 	_refresh_hook_visibility()
 	_refresh_hook_prompts()
 	_reset_player_to_bed_spawn()
 	# Defer initial activation by one frame so cameras can resolve cleanly.
 	call_deferred("_initial_phase_check")
+
+func _connect_cutscene_finish() -> void:
+	var modal := get_tree().root.find_child("CutsceneModal", true, false)
+	if modal != null and modal.has_signal("cutscene_finished"):
+		if not modal.cutscene_finished.is_connected(_on_cutscene_finished):
+			modal.cutscene_finished.connect(_on_cutscene_finished)
+
+func _on_cutscene_started(_scene) -> void:
+	if player != null:
+		player.process_mode = Node.PROCESS_MODE_DISABLED
+
+func _on_cutscene_finished() -> void:
+	if player != null and visible:
+		player.process_mode = Node.PROCESS_MODE_INHERIT
 
 func _on_money_changed(_v: float) -> void:
 	_refresh_hook_visibility()

@@ -609,6 +609,7 @@ func _load_cutscenes() -> void:
 	cutscenes.clear()
 	var dir := DirAccess.open(CUTSCENE_DIR)
 	if dir == null:
+		print("[cutscene] could not open dir: ", CUTSCENE_DIR)
 		return
 	dir.list_dir_begin()
 	var file := dir.get_next()
@@ -618,25 +619,32 @@ func _load_cutscenes() -> void:
 			var res := load(path)
 			if res is Cutscene:
 				cutscenes.append(res)
+				print("[cutscene] loaded: ", res.id, " (", path, ")")
+			else:
+				print("[cutscene] not a Cutscene: ", path, " got=", res)
 		file = dir.get_next()
 	dir.list_dir_end()
+	print("[cutscene] total loaded: ", cutscenes.size())
 
 func _check_cutscenes() -> void:
+	print("[cutscene] check: day=", current_day, " money_earned=", total_money_earned, " loaded=", cutscenes.size())
 	for c in cutscenes:
-		if c.run_once and triggered_cutscenes.get(c.id, false):
+		var already: bool = triggered_cutscenes.get(c.id, false)
+		if c.run_once and already:
+			print("  skip (already triggered): ", c.id)
 			continue
 		var fired := false
 		match c.trigger:
 			Cutscene.Trigger.FIRST_LAUNCH:
-				# Plays exactly once on the first day of a fresh save.
 				fired = current_day == 1 and total_money_earned == 0.0 \
-					and not triggered_cutscenes.get(c.id, false)
+					and not already
 			Cutscene.Trigger.DAY_NUMBER:
 				fired = current_day == int(c.threshold)
 			Cutscene.Trigger.MONEY_TOTAL_EARNED:
 				fired = total_money_earned >= c.threshold
+		print("  ", c.id, " trigger=", c.trigger, " threshold=", c.threshold, " fired=", fired)
 		if fired:
 			if c.run_once:
 				triggered_cutscenes[c.id] = true
 			cutscene_triggered.emit(c)
-			return  # one cutscene per day_started; queue more for later days
+			return

@@ -6,13 +6,7 @@
 script = ExtResource("1_cutscene")
 id = &"day_1_homecoming"
 title = "Home"
-body = "You came home last night.
-
-Mom made hot chocolate. Said you should rest. Didn't ask anything.
-
-The spade is leaning against the porch. Grandpa's. Dad's. Yours, now.
-
-It's morning."
+body = "You came home last night.\n\nMom made hot chocolate. Said you should rest. Didn't ask anything.\n\nThe spade is leaning against the porch. Grandpa's. Dad's. Yours, now.\n\nIt's morning."
 trigger = 0
 threshold = 1.0
 run_once = true

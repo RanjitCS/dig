@@ -77,7 +77,8 @@ func _ready() -> void:
 	phase_changed.emit(phase)
 	day_started.emit(current_day)
 	day_tick.emit(time_left, day_length())
-	_check_cutscenes()  # first launch may fire the Day 1 scene immediately
+	# Defer first cutscene check so scene listeners (modal) have time to connect.
+	call_deferred("_check_cutscenes")
 
 func _load_ore_prices() -> void:
 	ore_prices.clear()

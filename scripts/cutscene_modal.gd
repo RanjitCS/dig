@@ -17,6 +17,7 @@ var _is_typing: bool = false
 var _active: bool = false
 
 func _ready() -> void:
+	print("[cutscene-modal] _ready, connecting to GameState.cutscene_triggered")
 	visible = false
 	continue_button.pressed.connect(_on_continue)
 	fast_button.pressed.connect(_on_fast)

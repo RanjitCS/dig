@@ -29,12 +29,14 @@ func _ready() -> void:
 	GameState.day_ended.connect(_on_day_ended_for_sell)
 	GameState.deposited_changed.connect(_on_deposited_changed)
 	GameState.carried_changed.connect(_on_carried_changed)
+	GameState.phase_changed.connect(_on_phase_changed)
 	dig_world.deepest_changed.connect(_on_deepest_changed)
 	toast_timer.timeout.connect(_hide_toast)
 	toast_label.visible = false
 	_last_pile = GameState.deposited_dirt
 	_refresh_all()
 	_refresh_sell_button()
+	_on_phase_changed(GameState.phase)
 
 func _on_dirt_changed(_v: float) -> void:
 	_refresh_dirt()
@@ -103,6 +105,13 @@ func _on_day_started(day: int) -> void:
 	day_label.text = "Day %d" % day
 	_refresh_day_bar_max()
 	_refresh_sell_button()
+
+func _on_phase_changed(p: int) -> void:
+	# Hide the day timer + dig-related labels while in the house.
+	var digging: bool = p == GameState.Phase.DIGGING
+	time_bar.visible = digging
+	time_left_label.visible = digging
+	depth_label.visible = digging
 
 func _refresh_all() -> void:
 	_refresh_dirt()

@@ -41,20 +41,23 @@ func _apply_visuals() -> void:
 		fallback_rect.position = -SIZE * 0.5
 	_update_crack()
 
-func hit_once() -> void:
-	if block_type == null:
+func hit_n(damage: int) -> void:
+	# Apply 'damage' HP to this block. Broken when HP reaches 0.
+	if block_type == null or damage <= 0:
 		return
 	if block_type.indestructible:
 		_flash()
 		return
-	var click_dirt_bonus := GameState._sum_effect(Upgrade.Effect.CLICK_DIRT)
-	var dmg: int = 1 + int(click_dirt_bonus)
-	hits_remaining -= dmg
+	hits_remaining -= damage
 	if hits_remaining <= 0:
 		broken.emit(self)
 	else:
 		_update_crack()
 		_flash()
+
+# Legacy alias: callers using old API.
+func hit_once() -> void:
+	hit_n(1)
 
 func _update_crack() -> void:
 	if block_type == null or block_type.indestructible or block_type.hits_to_break <= 1:

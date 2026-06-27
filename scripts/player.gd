@@ -20,6 +20,7 @@ const SIZE: Vector2 = Vector2(36, 44)
 var _coyote_timer: float = 0.0
 var _jump_buffer_timer: float = 0.0
 var _facing: int = 1  # 1 = right, -1 = left
+var _dig_cooldown: float = 0.0  # seconds until next swing allowed
 
 signal facing_changed(direction: int)
 
@@ -82,27 +83,31 @@ func _physics_process(delta: float) -> void:
 
 	move_and_slide()
 
-	# --- dig action ---
-	if Input.is_action_just_pressed("dig"):
-		_try_dig()
+	# --- dig action (hold to dig; per-tool cooldown gates each swing) ---
+	_dig_cooldown = max(0.0, _dig_cooldown - delta)
+	if Input.is_action_pressed("dig") and _dig_cooldown <= 0.0:
+		var tool := GameState.equipped_upgrade()
+		var cooldown: float = tool.tool_cooldown_sec if tool != null else 0.20
+		if _try_dig(tool):
+			_dig_cooldown = cooldown
 
-func _try_dig() -> void:
+# Returns true if a dig actually landed (block existed in the targeted cell(s)).
+func _try_dig(tool: Upgrade) -> bool:
 	var world := get_parent()
 	if world == null or not world.has_method("try_dig_at"):
-		print("player.dig: no world parent (parent=%s)" % str(get_parent()))
-		return
-	print("player.dig pos=%s facing=%d down=%s up=%s" % [
-		str(global_position), _facing,
-		str(Input.is_action_pressed("move_down")),
-		str(Input.is_action_pressed("move_up")),
-	])
-	var candidates := _dig_candidates()
-	print("  candidates: %s" % str(candidates))
-	for target in candidates:
-		var ok: bool = world.try_dig_at(target)
-		print("    target=%s ok=%s" % [str(target), str(ok)])
-		if ok:
-			return
+		return false
+	var damage: int = tool.tool_damage if tool != null else 1
+	var aoe: bool = tool != null and tool.tool_aoe
+	var column_only: bool = tool != null and tool.tool_column_only
+	# Drill: always target the cell at the player's feet, no direction needed.
+	if column_only:
+		var feet_cell: Vector2i = world.world_pos_to_grid(global_position + Vector2(0, SIZE.y * 0.5 + 4))
+		return world.try_dig_at(feet_cell, damage, false)
+	# Other tools: candidate fallback chain.
+	for target in _dig_candidates():
+		if world.try_dig_at(target, damage, aoe):
+			return true
+	return false
 
 func _dig_candidates() -> Array:
 	var world := get_parent()
@@ -110,7 +115,6 @@ func _dig_candidates() -> Array:
 	var head := global_position - Vector2(0, SIZE.y * 0.5 + 4)
 	var fwd_low := global_position + Vector2(float(_facing) * (SIZE.x * 0.5 + 4), SIZE.y * 0.25)
 	var fwd_at_floor := Vector2(global_position.x + float(_facing) * (SIZE.x * 0.5 + 4), max(global_position.y + SIZE.y * 0.4, 4.0))
-	print("  sample points: feet=", feet, " head=", head, " fwd_low=", fwd_low, " fwd_at_floor=", fwd_at_floor, " SIZE=", SIZE)
 	if Input.is_action_pressed("move_down"):
 		return [world.world_pos_to_grid(feet)]
 	if Input.is_action_pressed("move_up"):

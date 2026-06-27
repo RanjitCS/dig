@@ -17,3 +17,7 @@ unlock_money = 600.0
 reach = 1
 is_equippable = true
 max_level = 0
+tool_damage = 1
+tool_cooldown_sec = 0.50
+tool_aoe = true
+tool_column_only = false

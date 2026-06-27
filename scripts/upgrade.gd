@@ -39,6 +39,12 @@ enum Category {
 @export var is_equippable: bool = true
 @export var max_level: int = 0  # 0 = infinite
 
+# Tool mechanics (only meaningful when is_equippable=true)
+@export var tool_damage: int = 1
+@export var tool_cooldown_sec: float = 0.15
+@export var tool_aoe: bool = false       # 3x3 around the target cell
+@export var tool_column_only: bool = false  # drill: only digs straight down
+
 func cost_at(level: int) -> float:
 	return base_cost * pow(cost_mult, level)
 

@@ -4,7 +4,9 @@ const UPGRADE_DIR: String = "res://resources/upgrades/"
 const MILESTONE_DIR: String = "res://resources/milestones/"
 const BLOCK_DIR: String = "res://resources/blocks/"
 const SAVE_PATH: String = "user://save.json"
-const SAVE_VERSION: int = 4
+const SAVE_VERSION: int = 5
+
+enum Phase { HOUSE_INTERIOR, DIGGING, END_OF_DAY }
 const DIRT_PRICE_PER_UNIT: float = 0.10
 const AUTOSAVE_INTERVAL_SEC: float = 10.0
 const OFFLINE_PROGRESS_CAP_SEC: float = 60.0 * 60.0 * 12.0  # 12 hours
@@ -32,10 +34,12 @@ var equipped_id: StringName = &"spade"
 var current_day: int = 1
 var time_left: float = BASE_DAY_LENGTH_SEC
 var day_paused: bool = false  # true during end-of-day screen
+var phase: Phase = Phase.HOUSE_INTERIOR
 var day_money_earned: float = 0.0
 var day_dirt_dug: float = 0.0
 
 signal world_reset_requested
+signal phase_changed(new_phase: Phase)
 
 var _autosave_accum: float = 0.0
 var _last_saved_unix: int = 0
@@ -59,6 +63,7 @@ func _ready() -> void:
 	load_game()
 	time_left = day_length()
 	set_process(true)
+	phase_changed.emit(phase)
 	day_started.emit(current_day)
 	day_tick.emit(time_left, day_length())
 
@@ -84,7 +89,8 @@ func _notification(what: int) -> void:
 		save_game()
 
 func _process(delta: float) -> void:
-	if not day_paused:
+	# Day timer only ticks while actively digging.
+	if phase == Phase.DIGGING and not day_paused:
 		var auto_dirt := _sum_effect(Upgrade.Effect.AUTO_DIRT_PER_SEC)
 		var auto_money := _sum_effect(Upgrade.Effect.AUTO_MONEY_PER_SEC)
 		if auto_dirt > 0.0:
@@ -99,6 +105,20 @@ func _process(delta: float) -> void:
 	if _autosave_accum >= AUTOSAVE_INTERVAL_SEC:
 		_autosave_accum = 0.0
 		save_game()
+
+func set_phase(new_phase: Phase) -> void:
+	if phase == new_phase:
+		return
+	phase = new_phase
+	phase_changed.emit(phase)
+
+func start_digging() -> void:
+	# Called when the player leaves the house. If we were paused (end-of-day),
+	# unpause + advance day. Otherwise just transition into DIGGING.
+	if day_paused:
+		# coming from end-of-day modal flow if it was active; usually start_next_day handles that
+		pass
+	set_phase(Phase.DIGGING)
 
 func day_length() -> float:
 	return BASE_DAY_LENGTH_SEC + _sum_effect(Upgrade.Effect.DAY_LENGTH_SEC)
@@ -198,9 +218,10 @@ func sell_all_dirt() -> float:
 func _end_day() -> void:
 	day_paused = true
 	time_left = 0.0
-	# Anything still in the backpack gets dumped on the pile — no waste.
-	if dirt > 0.0:
+	# Anything still in the backpack (dirt or ore) gets dumped on the pile — no waste.
+	if dirt > 0.0 or not carried_ore.is_empty():
 		deposit_carried()
+	set_phase(Phase.END_OF_DAY)
 	day_ended.emit(current_day, day_dirt_dug, day_money_earned)
 
 func start_next_day() -> void:
@@ -209,8 +230,14 @@ func start_next_day() -> void:
 	day_money_earned = 0.0
 	time_left = day_length()
 	day_paused = false
+	# Day begins in the bedroom; player must walk out the door to begin digging.
+	set_phase(Phase.HOUSE_INTERIOR)
 	day_started.emit(current_day)
 	day_tick.emit(time_left, day_length())
+
+func skip_to_end_of_day() -> void:
+	# Called when player presses E on the bed before going out.
+	_end_day()
 
 # --- Public actions -------------------------------------------------------
 
@@ -262,12 +289,14 @@ func reset_game() -> void:
 	time_left = day_length()
 	day_paused = false
 	equipped_id = &"spade"
+	phase = Phase.HOUSE_INTERIOR
 	_last_saved_unix = 0
 	dirt_changed.emit(dirt)
 	money_changed.emit(money)
 	equipped_changed.emit(equipped_id)
 	carried_changed.emit()
 	deposited_changed.emit(deposited_dirt)
+	phase_changed.emit(phase)
 	world_reset_requested.emit()
 	day_started.emit(current_day)
 	day_tick.emit(time_left, day_length())
@@ -357,6 +386,7 @@ func save_game() -> void:
 		"upgrade_levels": levels_plain,
 		"triggered_milestones": milestones_plain,
 		"equipped_id": String(equipped_id),
+		"phase": int(phase),
 		"current_day": current_day,
 		"time_left": time_left,
 		"day_dirt_dug": day_dirt_dug,
@@ -404,6 +434,7 @@ func load_game() -> void:
 	_last_saved_unix = int(data.get("saved_at", 0))
 	var saved_equipped := String(data.get("equipped_id", "spade"))
 	equipped_id = StringName(saved_equipped)
+	phase = data.get("phase", Phase.HOUSE_INTERIOR) as Phase
 	current_day = int(data.get("current_day", 1))
 	time_left = float(data.get("time_left", day_length()))
 	day_dirt_dug = float(data.get("day_dirt_dug", 0.0))

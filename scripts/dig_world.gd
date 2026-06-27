@@ -31,6 +31,24 @@ func _ready() -> void:
 	_spawn_player_at_surface()
 	GameState.day_started.connect(_on_day_started)
 	GameState.world_reset_requested.connect(_on_world_reset)
+	GameState.phase_changed.connect(_on_phase_changed)
+	# Initial activation based on current phase.
+	_on_phase_changed(GameState.phase)
+
+func activate() -> void:
+	visible = true
+	process_mode = Node.PROCESS_MODE_INHERIT
+	_spawn_player_at_surface()
+
+func deactivate() -> void:
+	visible = false
+	process_mode = Node.PROCESS_MODE_DISABLED
+
+func _on_phase_changed(p: int) -> void:
+	if p == GameState.Phase.DIGGING:
+		activate()
+	else:
+		deactivate()
 
 func _on_world_reset() -> void:
 	_regenerate_world()
@@ -178,24 +196,39 @@ func _on_block_click_requested(block: DigBlock) -> void:
 
 # Player-driven dig: targeted at a specific grid cell adjacent to the player.
 # Bypasses the click-reach rules since physical proximity is the new reach.
-func try_dig_at(grid_pos: Vector2i) -> bool:
+func try_dig_at(grid_pos: Vector2i, damage: int = 1, aoe: bool = false) -> bool:
 	if GameState.day_paused:
-		print("world.try_dig refused: day_paused")
 		return false
 	if GameState.backpack_full():
-		print("world.try_dig refused: backpack full (%.1f/%.1f)" % [GameState.dirt, GameState.backpack_capacity()])
 		return false
-	var block: DigBlock = blocks_by_pos.get(grid_pos, null)
-	if block == null:
-		print("world.try_dig refused: no block at %s" % str(grid_pos))
+	var center_block: DigBlock = blocks_by_pos.get(grid_pos, null)
+	if center_block == null:
 		return false
-	if block.block_type and block.block_type.indestructible:
-		print("world.try_dig: block at %s is INDESTRUCTIBLE (%s) — returning false" % [str(grid_pos), str(block.block_type.id)])
-		block.hit_once()
+	# Center is always indestructible-aware: a single tap on bedrock does nothing.
+	if center_block.block_type and center_block.block_type.indestructible:
+		# Visual nudge but no damage and no "successful dig" semantics.
 		return false
-	print("world.try_dig hit: pos=%s type=%s hits_remaining=%d" % [str(grid_pos), str(block.block_type.id), block.hits_remaining])
-	block.hit_once()
+	if aoe:
+		_hit_area(grid_pos, damage)
+	else:
+		_hit_single(center_block, damage)
 	return true
+
+func _hit_single(block: DigBlock, damage: int) -> void:
+	if block.block_type and block.block_type.indestructible:
+		return
+	block.hit_n(damage)
+
+func _hit_area(center: Vector2i, damage: int) -> void:
+	for dy in [-1, 0, 1]:
+		for dx in [-1, 0, 1]:
+			var p: Vector2i = center + Vector2i(dx, dy)
+			var b: DigBlock = blocks_by_pos.get(p, null)
+			if b == null:
+				continue
+			if b.block_type and b.block_type.indestructible:
+				continue
+			b.hit_n(damage)
 
 func world_pos_to_grid(world_pos: Vector2) -> Vector2i:
 	# Block origins are at (col * SIZE + SIZE/2, (row-1) * SIZE + SIZE/2).

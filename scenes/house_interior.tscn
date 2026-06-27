@@ -1,0 +1,218 @@
+[gd_scene load_steps=8 format=3 uid="uid://dig0scene0houseinterior"]
+
+[ext_resource type="Script" path="res://scripts/house_interior.gd" id="1_house"]
+[ext_resource type="PackedScene" uid="uid://dig0scene0player" path="res://scenes/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" uid="uid://dig0scene0interactable" path="res://scenes/interactable.tscn" id="3_inter"]
+
+[sub_resource type="RectangleShape2D" id="FloorShape"]
+size = Vector2(1400, 16)
+
+[sub_resource type="RectangleShape2D" id="WallShape"]
+size = Vector2(16, 400)
+
+[sub_resource type="RectangleShape2D" id="BedShape"]
+size = Vector2(120, 80)
+
+[sub_resource type="RectangleShape2D" id="DoorShape"]
+size = Vector2(56, 120)
+
+[node name="HouseInterior" type="Node2D"]
+script = ExtResource("1_house")
+
+[node name="Sky" type="ColorRect" parent="."]
+offset_left = -2000.0
+offset_top = -2000.0
+offset_right = 2000.0
+offset_bottom = 0.0
+color = Color(0.22, 0.18, 0.22, 1)
+mouse_filter = 2
+
+[node name="WallBg" type="ColorRect" parent="."]
+offset_left = 0.0
+offset_top = -400.0
+offset_right = 1400.0
+offset_bottom = 0.0
+color = Color(0.38, 0.30, 0.26, 1)
+mouse_filter = 2
+
+[node name="FloorVisual" type="ColorRect" parent="."]
+offset_left = 0.0
+offset_top = -8.0
+offset_right = 1400.0
+offset_bottom = 24.0
+color = Color(0.48, 0.32, 0.20, 1)
+mouse_filter = 2
+
+[node name="Floor" type="StaticBody2D" parent="."]
+position = Vector2(700, 0)
+
+[node name="FloorShape" type="CollisionShape2D" parent="Floor"]
+shape = SubResource("FloorShape")
+
+[node name="LeftWall" type="StaticBody2D" parent="."]
+position = Vector2(0, -200)
+
+[node name="LeftWallShape" type="CollisionShape2D" parent="LeftWall"]
+shape = SubResource("WallShape")
+
+[node name="RightWall" type="StaticBody2D" parent="."]
+position = Vector2(1400, -200)
+
+[node name="RightWallShape" type="CollisionShape2D" parent="RightWall"]
+shape = SubResource("WallShape")
+
+[node name="BedVisual" type="ColorRect" parent="."]
+offset_left = 80.0
+offset_top = -80.0
+offset_right = 220.0
+offset_bottom = -8.0
+color = Color(0.42, 0.25, 0.30, 1)
+mouse_filter = 2
+
+[node name="BedBlanket" type="ColorRect" parent="."]
+offset_left = 90.0
+offset_top = -76.0
+offset_right = 210.0
+offset_bottom = -36.0
+color = Color(0.58, 0.35, 0.42, 1)
+mouse_filter = 2
+
+[node name="BedLabel" type="Label" parent="."]
+offset_left = 80.0
+offset_top = -110.0
+offset_right = 220.0
+offset_bottom = -82.0
+text = "bed"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.85, 0.75, 0.70, 0.7)
+mouse_filter = 2
+
+[node name="Bed" parent="." instance=ExtResource("3_inter")]
+position = Vector2(150, -40)
+prompt_text = "[E] sleep"
+
+[node name="BedShape" type="CollisionShape2D" parent="Bed"]
+shape = SubResource("BedShape")
+
+[node name="ToolHooks" type="Node2D" parent="."]
+position = Vector2(0, 0)
+
+[node name="ToolWallShelf" type="ColorRect" parent="ToolHooks"]
+offset_left = 500.0
+offset_top = -200.0
+offset_right = 920.0
+offset_bottom = -190.0
+color = Color(0.30, 0.22, 0.18, 1)
+mouse_filter = 2
+
+[node name="Spade" parent="ToolHooks" instance=ExtResource("3_inter")]
+position = Vector2(540, -150)
+prompt_text = "[E] Rusty Spade"
+
+[node name="SpadeVisual" type="ColorRect" parent="ToolHooks/Spade"]
+offset_left = -18.0
+offset_top = -36.0
+offset_right = 18.0
+offset_bottom = 4.0
+color = Color(0.65, 0.45, 0.30, 1)
+mouse_filter = 2
+
+[node name="Pickaxe" parent="ToolHooks" instance=ExtResource("3_inter")]
+position = Vector2(640, -150)
+prompt_text = "[E] Pickaxe"
+
+[node name="PickaxeVisual" type="ColorRect" parent="ToolHooks/Pickaxe"]
+offset_left = -22.0
+offset_top = -36.0
+offset_right = 22.0
+offset_bottom = 4.0
+color = Color(0.45, 0.45, 0.50, 1)
+mouse_filter = 2
+
+[node name="Hammer" parent="ToolHooks" instance=ExtResource("3_inter")]
+position = Vector2(740, -150)
+prompt_text = "[E] Hammer"
+
+[node name="HammerVisual" type="ColorRect" parent="ToolHooks/Hammer"]
+offset_left = -20.0
+offset_top = -36.0
+offset_right = 20.0
+offset_bottom = 4.0
+color = Color(0.55, 0.35, 0.25, 1)
+mouse_filter = 2
+
+[node name="Drill" parent="ToolHooks" instance=ExtResource("3_inter")]
+position = Vector2(840, -150)
+prompt_text = "[E] Drill"
+
+[node name="DrillVisual" type="ColorRect" parent="ToolHooks/Drill"]
+offset_left = -18.0
+offset_top = -36.0
+offset_right = 18.0
+offset_bottom = 4.0
+color = Color(0.50, 0.55, 0.60, 1)
+mouse_filter = 2
+
+[node name="ToolWallLabel" type="Label" parent="ToolHooks"]
+offset_left = 500.0
+offset_top = -240.0
+offset_right = 920.0
+offset_bottom = -210.0
+text = "tools"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.85, 0.75, 0.70, 0.7)
+mouse_filter = 2
+
+[node name="DoorVisual" type="ColorRect" parent="."]
+offset_left = 1240.0
+offset_top = -160.0
+offset_right = 1320.0
+offset_bottom = -8.0
+color = Color(0.30, 0.18, 0.12, 1)
+mouse_filter = 2
+
+[node name="DoorKnob" type="ColorRect" parent="."]
+offset_left = 1308.0
+offset_top = -90.0
+offset_right = 1316.0
+offset_bottom = -82.0
+color = Color(0.85, 0.75, 0.30, 1)
+mouse_filter = 2
+
+[node name="DoorLabel" type="Label" parent="."]
+offset_left = 1220.0
+offset_top = -190.0
+offset_right = 1340.0
+offset_bottom = -165.0
+text = "→ outside"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.85, 0.75, 0.70, 0.7)
+mouse_filter = 2
+
+[node name="Door" parent="." instance=ExtResource("3_inter")]
+position = Vector2(1280, -80)
+prompt_text = "[E] start day"
+
+[node name="DoorShape" type="CollisionShape2D" parent="Door"]
+shape = SubResource("DoorShape")
+
+[node name="EquippedLabel" type="Label" parent="."]
+offset_left = 480.0
+offset_top = -380.0
+offset_right = 920.0
+offset_bottom = -360.0
+text = "Equipped: Rusty Spade"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.95, 0.92, 0.85, 1)
+mouse_filter = 2
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+position = Vector2(160, -40)
+
+[node name="Camera2D" type="Camera2D" parent="Player"]
+position_smoothing_enabled = true
+position_smoothing_speed = 6.0

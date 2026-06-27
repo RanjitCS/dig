@@ -33,7 +33,10 @@ func _ready() -> void:
 	GameState.day_started.connect(_on_day_started)
 	GameState.world_reset_requested.connect(_on_world_reset)
 	GameState.phase_changed.connect(_on_phase_changed)
-	# Initial activation based on current phase.
+	# Defer initial activation by one frame so cameras can resolve cleanly.
+	call_deferred("_initial_phase_check")
+
+func _initial_phase_check() -> void:
 	_on_phase_changed(GameState.phase)
 
 func activate() -> void:

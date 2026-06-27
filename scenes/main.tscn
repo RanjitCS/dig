@@ -149,9 +149,11 @@ gui_disable_input = false
 
 [node name="DigWorld" parent="Root/Body/WorldViewport/Viewport" instance=ExtResource("2_world")]
 unique_name_in_owner = true
+visible = false
 
 [node name="HouseInterior" parent="Root/Body/WorldViewport/Viewport" instance=ExtResource("5_house")]
 unique_name_in_owner = true
+visible = false
 
 [node name="ToastLabel" type="Label" parent="."]
 unique_name_in_owner = true

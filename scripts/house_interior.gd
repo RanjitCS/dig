@@ -32,6 +32,11 @@ func _ready() -> void:
 	GameState.phase_changed.connect(_on_phase_changed)
 	_refresh_equipped_label()
 	_reset_player_to_bed_spawn()
+	# Defer initial activation by one frame so cameras can resolve cleanly.
+	call_deferred("_initial_phase_check")
+
+func _initial_phase_check() -> void:
+	_on_phase_changed(GameState.phase)
 
 func activate() -> void:
 	_reset_player_to_bed_spawn()

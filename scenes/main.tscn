@@ -149,31 +149,6 @@ gui_disable_input = false
 [node name="DigWorld" parent="Root/Body/WorldViewport/Viewport" instance=ExtResource("2_world")]
 unique_name_in_owner = true
 
-[node name="RightPanel" type="PanelContainer" parent="Root/Body"]
-custom_minimum_size = Vector2(340, 0)
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="RightCol" type="VBoxContainer" parent="Root/Body/RightPanel"]
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="UpgradesTitle" type="Label" parent="Root/Body/RightPanel/RightCol"]
-layout_mode = 2
-text = "Tools"
-theme_override_font_sizes/font_size = 22
-
-[node name="UpgradesScroll" type="ScrollContainer" parent="Root/Body/RightPanel/RightCol"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[node name="UpgradesList" type="VBoxContainer" parent="Root/Body/RightPanel/RightCol/UpgradesScroll"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 8
-
 [node name="ToastLabel" type="Label" parent="."]
 unique_name_in_owner = true
 layout_mode = 1

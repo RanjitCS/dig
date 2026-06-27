@@ -33,6 +33,9 @@ func _ready() -> void:
 	GameState.world_reset_requested.connect(_on_world_reset)
 
 func _on_world_reset() -> void:
+	_regenerate_world()
+
+func _regenerate_world() -> void:
 	for child in grid_root.get_children():
 		child.queue_free()
 	blocks_by_pos.clear()
@@ -46,8 +49,12 @@ func _spawn_player_at_surface() -> void:
 	var door_x := float(HOUSE_COL_START) * BLOCK_SIZE.x - BLOCK_SIZE.x * 0.5
 	player.reset_to(Vector2(door_x, -24))
 
-func _on_day_started(_day: int) -> void:
-	_spawn_player_at_surface()
+func _on_day_started(day: int) -> void:
+	# Day 1 = initial _ready() handles spawn; subsequent days regenerate the grid.
+	if day > 1:
+		_regenerate_world()
+	else:
+		_spawn_player_at_surface()
 
 func _load_block_types() -> void:
 	block_types.clear()
@@ -228,18 +235,17 @@ func _on_block_broken(block: DigBlock) -> void:
 
 func _award_yields_for(type: BlockType) -> void:
 	var crit_chance := GameState._sum_effect(Upgrade.Effect.CRIT_CHANCE)
-	var crit := 1.0
+	var crit: float = 1.0
 	if crit_chance > 0.0 and randf() < crit_chance:
 		crit = 5.0
-	var money_mult := 1.0 + GameState._sum_effect(Upgrade.Effect.CLICK_MONEY_MULT)
 	var dirt_amt: float = type.dirt_yield * crit
-	var money_amt: float = type.money_yield * crit * money_mult
-	print("yield awarded: type=%s dirt=%.2f money=%.2f (crit=%.1fx money_mult=%.2f)" % [
-		str(type.id), dirt_amt, money_amt, crit, money_mult
-	])
-	GameState._add_dirt(dirt_amt)
+	if dirt_amt > 0.0:
+		GameState._add_dirt(dirt_amt)
+	# If this block has a money value, it becomes ORE in the backpack
+	# (1 ore unit per break, multiplied by crit). Sell happens at end-of-day.
 	if type.money_yield > 0.0:
-		GameState._add_money(money_amt)
+		var ore_count: int = max(1, int(round(crit)))
+		GameState.add_ore(type.id, ore_count)
 
 func _maybe_extend_world(broken_row: int) -> void:
 	var target := broken_row + ROWS_AHEAD

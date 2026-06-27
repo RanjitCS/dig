@@ -2,16 +2,21 @@ extends Node
 
 const UPGRADE_DIR: String = "res://resources/upgrades/"
 const MILESTONE_DIR: String = "res://resources/milestones/"
+const BLOCK_DIR: String = "res://resources/blocks/"
 const SAVE_PATH: String = "user://save.json"
-const SAVE_VERSION: int = 3
-const DIRT_PRICE_PER_UNIT: float = 0.02
+const SAVE_VERSION: int = 4
+const DIRT_PRICE_PER_UNIT: float = 0.10
 const AUTOSAVE_INTERVAL_SEC: float = 10.0
 const OFFLINE_PROGRESS_CAP_SEC: float = 60.0 * 60.0 * 12.0  # 12 hours
 const BASE_DAY_LENGTH_SEC: float = 30.0
 const BASE_BACKPACK_CAPACITY: float = 30.0
 
-var dirt: float = 0.0              # carried (capped at backpack_capacity)
-var deposited_dirt: float = 0.0    # pile at the surface (uncapped, sells at end of day)
+var dirt: float = 0.0              # carried (capped at backpack_capacity with ore)
+var deposited_dirt: float = 0.0    # pile at the surface (uncapped)
+var carried_ore: Dictionary = {}   # StringName ore_id -> int count (carried)
+var deposited_ore: Dictionary = {} # StringName ore_id -> int count (pile)
+var ore_prices: Dictionary = {}    # StringName ore_id -> float price per unit
+var ore_display_names: Dictionary = {} # StringName -> String
 var money: float = 0.0
 var total_dirt_dug: float = 0.0
 var total_money_earned: float = 0.0
@@ -36,6 +41,7 @@ var _autosave_accum: float = 0.0
 var _last_saved_unix: int = 0
 
 signal dirt_changed(new_amount: float)
+signal carried_changed  # fires when dirt or carried_ore changes
 signal deposited_changed(new_amount: float)
 signal money_changed(new_amount: float)
 signal upgrade_purchased(upgrade_id: StringName, new_level: int)
@@ -49,11 +55,29 @@ signal day_started(day: int)
 func _ready() -> void:
 	_load_upgrades()
 	_load_milestones()
+	_load_ore_prices()
 	load_game()
 	time_left = day_length()
 	set_process(true)
 	day_started.emit(current_day)
 	day_tick.emit(time_left, day_length())
+
+func _load_ore_prices() -> void:
+	ore_prices.clear()
+	ore_display_names.clear()
+	var dir := DirAccess.open(BLOCK_DIR)
+	if dir == null:
+		return
+	dir.list_dir_begin()
+	var file := dir.get_next()
+	while file != "":
+		if file.ends_with(".tres") or file.ends_with(".res"):
+			var res := load(BLOCK_DIR + file)
+			if res is BlockType and res.money_yield > 0.0 and not res.indestructible:
+				ore_prices[res.id] = res.money_yield
+				ore_display_names[res.id] = res.display_name
+		file = dir.get_next()
+	dir.list_dir_end()
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_WM_GO_BACK_REQUEST or what == NOTIFICATION_EXIT_TREE:
@@ -82,30 +106,82 @@ func day_length() -> float:
 func backpack_capacity() -> float:
 	return BASE_BACKPACK_CAPACITY + _sum_effect(Upgrade.Effect.BACKPACK_CAPACITY)
 
+func carried_total() -> float:
+	var total: float = dirt
+	for k in carried_ore.keys():
+		total += float(carried_ore[k])
+	return total
+
+func carried_ore_count() -> int:
+	var n: int = 0
+	for k in carried_ore.keys():
+		n += int(carried_ore[k])
+	return n
+
 func backpack_full() -> bool:
-	return dirt >= backpack_capacity()
+	return carried_total() >= backpack_capacity()
+
+func add_ore(ore_id: StringName, count: int) -> int:
+	if count <= 0:
+		return 0
+	var room: float = backpack_capacity() - carried_total()
+	if room <= 0.0:
+		return 0
+	var fit: int = min(count, int(floor(room)))
+	if fit <= 0:
+		return 0
+	carried_ore[ore_id] = int(carried_ore.get(ore_id, 0)) + fit
+	carried_changed.emit()
+	return fit
 
 func deposit_carried() -> float:
-	# Transfer everything in the backpack to the deposit pile. Returns amount moved.
-	if dirt <= 0.0:
+	var moved: float = 0.0
+	if dirt > 0.0:
+		deposited_dirt += dirt
+		moved += dirt
+		dirt = 0.0
+	for k in carried_ore.keys():
+		var c: int = int(carried_ore[k])
+		if c > 0:
+			deposited_ore[k] = int(deposited_ore.get(k, 0)) + c
+			moved += float(c)
+	carried_ore.clear()
+	if moved <= 0.0:
 		return 0.0
-	var moved := dirt
-	deposited_dirt += moved
-	dirt = 0.0
 	dirt_changed.emit(dirt)
+	carried_changed.emit()
 	deposited_changed.emit(deposited_dirt)
 	return moved
 
 func sell_deposited_pile() -> float:
-	# Convert deposit pile to money. End-of-day moment.
-	if deposited_dirt <= 0.0:
+	# Convert deposit pile (dirt + ore) to money. End-of-day moment.
+	if deposited_dirt <= 0.0 and deposited_ore.is_empty():
 		return 0.0
 	var money_mult := 1.0 + _sum_effect(Upgrade.Effect.CLICK_MONEY_MULT)
-	var earned := deposited_dirt * DIRT_PRICE_PER_UNIT * money_mult
+	var earned: float = deposited_dirt * DIRT_PRICE_PER_UNIT * money_mult
+	for k in deposited_ore.keys():
+		var count: int = int(deposited_ore[k])
+		var price: float = float(ore_prices.get(k, 0.0))
+		earned += float(count) * price * money_mult
 	deposited_dirt = 0.0
+	deposited_ore.clear()
 	deposited_changed.emit(deposited_dirt)
 	_add_money(earned)
 	return earned
+
+func deposited_pile_value() -> float:
+	# Preview the total $ the pile would sell for right now (with mult applied).
+	var money_mult := 1.0 + _sum_effect(Upgrade.Effect.CLICK_MONEY_MULT)
+	var total: float = deposited_dirt * DIRT_PRICE_PER_UNIT * money_mult
+	for k in deposited_ore.keys():
+		total += float(deposited_ore[k]) * float(ore_prices.get(k, 0.0)) * money_mult
+	return total
+
+func deposited_total_units() -> float:
+	var total: float = deposited_dirt
+	for k in deposited_ore.keys():
+		total += float(deposited_ore[k])
+	return total
 
 # Legacy helper kept for the debug Sell button — sells whatever you carry,
 # bypassing the deposit pile.
@@ -173,6 +249,8 @@ func buy_upgrade(upgrade_id: StringName) -> bool:
 func reset_game() -> void:
 	dirt = 0.0
 	deposited_dirt = 0.0
+	carried_ore.clear()
+	deposited_ore.clear()
 	money = 0.0
 	total_dirt_dug = 0.0
 	total_money_earned = 0.0
@@ -188,6 +266,7 @@ func reset_game() -> void:
 	dirt_changed.emit(dirt)
 	money_changed.emit(money)
 	equipped_changed.emit(equipped_id)
+	carried_changed.emit()
 	deposited_changed.emit(deposited_dirt)
 	world_reset_requested.emit()
 	day_started.emit(current_day)
@@ -270,6 +349,8 @@ func save_game() -> void:
 		"saved_at": _last_saved_unix,
 		"dirt": dirt,
 		"deposited_dirt": deposited_dirt,
+		"carried_ore": _ore_dict_to_plain(carried_ore),
+		"deposited_ore": _ore_dict_to_plain(deposited_ore),
 		"money": money,
 		"total_dirt_dug": total_dirt_dug,
 		"total_money_earned": total_money_earned,
@@ -307,6 +388,8 @@ func load_game() -> void:
 		return
 	dirt = float(data.get("dirt", 0.0))
 	deposited_dirt = float(data.get("deposited_dirt", 0.0))
+	carried_ore = _ore_plain_to_dict(data.get("carried_ore", {}))
+	deposited_ore = _ore_plain_to_dict(data.get("deposited_ore", {}))
 	money = float(data.get("money", 0.0))
 	total_dirt_dug = float(data.get("total_dirt_dug", 0.0))
 	total_money_earned = float(data.get("total_money_earned", 0.0))
@@ -326,6 +409,7 @@ func load_game() -> void:
 	day_dirt_dug = float(data.get("day_dirt_dug", 0.0))
 	day_money_earned = float(data.get("day_money_earned", 0.0))
 	dirt_changed.emit(dirt)
+	carried_changed.emit()
 	deposited_changed.emit(deposited_dirt)
 	money_changed.emit(money)
 	equipped_changed.emit(equipped_id)
@@ -357,12 +441,15 @@ func _add_dirt(amount: float) -> void:
 	if amount <= 0.0:
 		return
 	var cap := backpack_capacity()
-	var room: float = max(0.0, cap - dirt)
+	var room: float = max(0.0, cap - carried_total())
 	var added: float = min(amount, room)
+	if added <= 0.0:
+		return
 	dirt += added
 	total_dirt_dug += added
 	day_dirt_dug += added
 	dirt_changed.emit(dirt)
+	carried_changed.emit()
 	_check_milestones()
 
 func _add_money(amount: float) -> void:
@@ -373,6 +460,18 @@ func _add_money(amount: float) -> void:
 	day_money_earned += amount
 	money_changed.emit(money)
 	_check_milestones()
+
+func _ore_dict_to_plain(d: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	for k in d.keys():
+		out[String(k)] = int(d[k])
+	return out
+
+func _ore_plain_to_dict(d: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	for k in d.keys():
+		out[StringName(k)] = int(d[k])
+	return out
 
 func _sum_effect(effect: Upgrade.Effect) -> float:
 	var total := 0.0

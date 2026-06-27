@@ -66,11 +66,18 @@ func _on_sell_pile() -> void:
 	_refresh_pile_row()
 
 func _refresh_pile_row() -> void:
-	var amount: float = GameState.deposited_dirt
-	var money_mult: float = 1.0 + GameState._sum_effect(Upgrade.Effect.CLICK_MONEY_MULT)
-	var worth: float = amount * GameState.DIRT_PRICE_PER_UNIT * money_mult
-	pile_label.text = "Pile: %s dirt   ($%s)" % [_fmt(amount), _fmt(worth)]
-	sell_pile_button.disabled = amount <= 0.0
+	var dirt_amt: float = GameState.deposited_dirt
+	var worth: float = GameState.deposited_pile_value()
+	var parts: Array = []
+	if dirt_amt > 0.0:
+		parts.append("%s dirt" % _fmt(dirt_amt))
+	for k in GameState.deposited_ore.keys():
+		var c: int = int(GameState.deposited_ore[k])
+		var name: String = String(GameState.ore_display_names.get(k, str(k)))
+		parts.append("%d %s" % [c, name])
+	var summary: String = ", ".join(parts) if not parts.is_empty() else "(empty)"
+	pile_label.text = "Pile: %s   ($%s)" % [summary, _fmt(worth)]
+	sell_pile_button.disabled = worth <= 0.0
 
 func _build_upgrade_rows() -> void:
 	for c in upgrades_list.get_children():

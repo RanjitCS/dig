@@ -1,7 +1,5 @@
 extends Control
 
-const UpgradeRowScene := preload("res://scenes/upgrade_row.tscn")
-
 @onready var dirt_label: Label = %DirtLabel
 @onready var pile_label: Label = %PileLabel
 @onready var money_label: Label = %MoneyLabel
@@ -9,14 +7,12 @@ const UpgradeRowScene := preload("res://scenes/upgrade_row.tscn")
 @onready var day_label: Label = %DayLabel
 @onready var time_left_label: Label = %TimeLeftLabel
 @onready var time_bar: ProgressBar = %TimeBar
-@onready var upgrades_list: VBoxContainer = %UpgradesList
 @onready var toast_label: Label = %ToastLabel
 @onready var toast_timer: Timer = %ToastTimer
 @onready var reset_button: Button = %ResetButton
 @onready var sell_button: Button = %SellButton
 @onready var dig_world: Node2D = %DigWorld
 
-var rows: Array = []
 var deepest_dug: int = 0
 var _last_pile: float = 0.0
 
@@ -32,17 +28,20 @@ func _ready() -> void:
 	GameState.day_started.connect(_on_day_started)
 	GameState.day_ended.connect(_on_day_ended_for_sell)
 	GameState.deposited_changed.connect(_on_deposited_changed)
+	GameState.carried_changed.connect(_on_carried_changed)
 	dig_world.deepest_changed.connect(_on_deepest_changed)
 	toast_timer.timeout.connect(_hide_toast)
 	toast_label.visible = false
 	_last_pile = GameState.deposited_dirt
-	_build_upgrade_rows()
 	_refresh_all()
 	_refresh_sell_button()
 
 func _on_dirt_changed(_v: float) -> void:
 	_refresh_dirt()
-	_refresh_rows()
+	_refresh_sell_button()
+
+func _on_carried_changed() -> void:
+	_refresh_dirt()
 	_refresh_sell_button()
 
 func _on_deposited_changed(v: float) -> void:
@@ -55,10 +54,8 @@ func _on_deposited_changed(v: float) -> void:
 
 func _on_money_changed(_v: float) -> void:
 	_refresh_money()
-	_refresh_rows()
 
 func _on_upgrade_purchased(_id: StringName, _lvl: int) -> void:
-	_refresh_rows()
 	_refresh_dirt()  # capacity may have changed
 	_refresh_day_bar_max()
 
@@ -107,29 +104,32 @@ func _on_day_started(day: int) -> void:
 	_refresh_day_bar_max()
 	_refresh_sell_button()
 
-func _build_upgrade_rows() -> void:
-	for u in GameState.upgrades:
-		if u.category != Upgrade.Category.TOOLS:
-			continue
-		var row := UpgradeRowScene.instantiate()
-		upgrades_list.add_child(row)
-		row.setup(u)
-		rows.append(row)
-
 func _refresh_all() -> void:
 	_refresh_dirt()
 	_refresh_pile()
 	_refresh_money()
 	_refresh_depth()
-	_refresh_rows()
 	_refresh_day_bar_max()
 	day_label.text = "Day %d" % GameState.current_day
 
 func _refresh_dirt() -> void:
-	dirt_label.text = "Dirt: %s / %s" % [_fmt(GameState.dirt), _fmt(GameState.backpack_capacity())]
+	var carried: float = GameState.carried_total()
+	var cap: float = GameState.backpack_capacity()
+	var ore_n: int = GameState.carried_ore_count()
+	if ore_n > 0:
+		dirt_label.text = "Pack: %s / %s  (%s dirt + %d ore)" % [_fmt(carried), _fmt(cap), _fmt(GameState.dirt), ore_n]
+	else:
+		dirt_label.text = "Pack: %s / %s" % [_fmt(carried), _fmt(cap)]
 
 func _refresh_pile() -> void:
-	pile_label.text = "Pile: %s" % _fmt(GameState.deposited_dirt)
+	var dirt_amt: float = GameState.deposited_dirt
+	var ore_n: int = 0
+	for k in GameState.deposited_ore.keys():
+		ore_n += int(GameState.deposited_ore[k])
+	if ore_n > 0:
+		pile_label.text = "Pile: %s dirt + %d ore" % [_fmt(dirt_amt), ore_n]
+	else:
+		pile_label.text = "Pile: %s" % _fmt(dirt_amt)
 
 func _refresh_money() -> void:
 	money_label.text = "$%s" % _fmt(GameState.money)
@@ -142,10 +142,6 @@ func _refresh_day_bar_max() -> void:
 	time_bar.max_value = length
 	time_bar.value = max(0.0, GameState.time_left)
 	time_left_label.text = "%ds" % int(ceil(max(0.0, GameState.time_left)))
-
-func _refresh_rows() -> void:
-	for r in rows:
-		r.refresh()
 
 func _show_toast(text: String) -> void:
 	toast_label.text = text

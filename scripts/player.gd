@@ -87,23 +87,35 @@ func _physics_process(delta: float) -> void:
 	_dig_cooldown = max(0.0, _dig_cooldown - delta)
 	if Input.is_action_pressed("dig") and _dig_cooldown <= 0.0:
 		var tool := GameState.equipped_upgrade()
-		var cooldown: float = tool.tool_cooldown_sec if tool != null else 0.20
+		var cooldown: float = _tool_cooldown(tool)
 		if _try_dig(tool):
 			_dig_cooldown = cooldown
+
+func _tool_level(tool: Upgrade) -> int:
+	if tool == null:
+		return 0
+	return GameState.level_of(tool.id)
+
+func _tool_damage(tool: Upgrade) -> int:
+	if tool == null:
+		return 1
+	return tool.damage_at(_tool_level(tool))
+
+func _tool_cooldown(tool: Upgrade) -> float:
+	if tool == null:
+		return 0.20
+	return tool.cooldown_at(_tool_level(tool))
 
 # Returns true if a dig actually landed (block existed in the targeted cell(s)).
 func _try_dig(tool: Upgrade) -> bool:
 	var world := get_parent()
 	if world == null or not world.has_method("try_dig_at"):
 		return false
-	var damage: int = tool.tool_damage if tool != null else 1
+	var damage: int = _tool_damage(tool)
 	var column_only: bool = tool != null and tool.tool_column_only
-	# Drill: always target the cell at the player's feet, no direction needed.
 	if column_only:
 		var feet_cell: Vector2i = world.world_pos_to_grid(global_position + Vector2(0, SIZE.y * 0.5 + 4))
 		return world.try_dig_at(feet_cell, damage, false)
-	# AoE only triggers when the player aims DOWN (S+Z) on an AoE-capable tool.
-	# Future tool tiers may flip on AoE for other directions.
 	var aoe_capable: bool = tool != null and tool.tool_aoe
 	var aoe_this_swing: bool = aoe_capable and Input.is_action_pressed("move_down")
 	for target in _dig_candidates():

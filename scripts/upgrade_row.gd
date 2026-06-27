@@ -18,8 +18,6 @@ func _ready() -> void:
 		_apply()
 
 func _apply() -> void:
-	name_label.text = upgrade.display_name
-	flavor_label.text = upgrade.flavor
 	refresh()
 
 func refresh() -> void:
@@ -27,8 +25,15 @@ func refresh() -> void:
 		return
 	var lvl := GameState.level_of(upgrade.id)
 	var currency := "$" if upgrade.cost_currency == &"money" else "dirt"
+	# Tier-aware name/flavor: shows current tier the player owns.
+	if upgrade.has_tiers():
+		name_label.text = upgrade.tier_name_at(lvl)
+		flavor_label.text = upgrade.tier_flavor_at(lvl)
+	else:
+		name_label.text = upgrade.display_name
+		flavor_label.text = upgrade.flavor
 	if upgrade.max_level > 0:
-		level_label.text = "Lv %d / %d" % [lvl, upgrade.max_level]
+		level_label.text = "Tier %d / %d" % [lvl, upgrade.max_level] if upgrade.has_tiers() else "Lv %d / %d" % [lvl, upgrade.max_level]
 	else:
 		level_label.text = "Lv %d" % lvl
 	if GameState.is_maxed(upgrade.id):
@@ -36,8 +41,13 @@ func refresh() -> void:
 		buy_button.disabled = true
 	else:
 		var cost := GameState.cost_of(upgrade.id)
-		var verb: String = "Upgrade" if lvl >= 1 else "Buy"
-		buy_button.text = "%s  •  %s%s" % [verb, currency, _fmt(cost)]
+		if upgrade.has_tiers():
+			# Show what they're upgrading TO.
+			var next_name: String = upgrade.tier_name_at(lvl + 1)
+			buy_button.text = "Upgrade: %s  •  %s%s" % [next_name, currency, _fmt(cost)]
+		else:
+			var verb: String = "Upgrade" if lvl >= 1 else "Buy"
+			buy_button.text = "%s  •  %s%s" % [verb, currency, _fmt(cost)]
 		buy_button.disabled = not GameState.can_afford(upgrade.id)
 	visible = GameState.is_unlocked(upgrade.id)
 

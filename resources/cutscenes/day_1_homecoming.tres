@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="Cutscene" load_steps=2 format=3 uid="uid://dig0cutscene0day1"]
+
+[ext_resource type="Script" path="res://scripts/cutscene.gd" id="1_cutscene"]
+
+[resource]
+script = ExtResource("1_cutscene")
+id = &"day_1_homecoming"
+title = "Home"
+body = "You came home last night.
+
+Mom made hot chocolate. Said you should rest. Didn't ask anything.
+
+The spade is leaning against the porch. Grandpa's. Dad's. Yours, now.
+
+It's morning."
+trigger = 0
+threshold = 1.0
+run_once = true

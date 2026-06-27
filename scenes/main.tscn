@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://b8dig0main0001"]
+[gd_scene load_steps=8 format=3 uid="uid://b8dig0main0001"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" uid="uid://dig0scene0digworld" path="res://scenes/dig_world.tscn" id="2_world"]
@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://dig0scene0endofday" path="res://scenes/end_of_day.tscn" id="4_eod"]
 [ext_resource type="PackedScene" uid="uid://dig0scene0houseinterior" path="res://scenes/house_interior.tscn" id="5_house"]
 [ext_resource type="Script" path="res://scripts/debug_panel.gd" id="6_debug"]
+[ext_resource type="PackedScene" uid="uid://dig0scene0cutscene" path="res://scenes/cutscene_modal.tscn" id="7_cutscene"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -184,6 +185,9 @@ wait_time = 4.0
 one_shot = true
 
 [node name="EndOfDay" parent="." instance=ExtResource("4_eod")]
+unique_name_in_owner = true
+
+[node name="CutsceneModal" parent="." instance=ExtResource("7_cutscene")]
 unique_name_in_owner = true
 
 [node name="DebugPanel" type="PanelContainer" parent="."]

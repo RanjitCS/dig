@@ -3,8 +3,9 @@ extends Node
 const UPGRADE_DIR: String = "res://resources/upgrades/"
 const MILESTONE_DIR: String = "res://resources/milestones/"
 const BLOCK_DIR: String = "res://resources/blocks/"
+const CUTSCENE_DIR: String = "res://resources/cutscenes/"
 const SAVE_PATH: String = "user://save.json"
-const SAVE_VERSION: int = 5
+const SAVE_VERSION: int = 6
 
 enum Phase { HOUSE_INTERIOR, DIGGING, END_OF_DAY }
 const DIRT_PRICE_PER_UNIT: float = 0.10
@@ -29,6 +30,9 @@ var upgrade_levels: Dictionary = {}  # StringName -> int
 var milestones: Array[Milestone] = []
 var triggered_milestones: Dictionary = {}  # StringName -> bool
 
+var cutscenes: Array[Cutscene] = []
+var triggered_cutscenes: Dictionary = {}  # StringName -> bool
+
 var equipped_id: StringName = &"spade"
 
 var current_day: int = 1
@@ -44,6 +48,7 @@ var day_dirt_dug: float = 0.0
 
 signal world_reset_requested
 signal phase_changed(new_phase: Phase)
+signal cutscene_triggered(scene: Cutscene)
 
 var _autosave_accum: float = 0.0
 var _last_saved_unix: int = 0
@@ -64,6 +69,7 @@ signal day_started(day: int)
 func _ready() -> void:
 	_load_upgrades()
 	_load_milestones()
+	_load_cutscenes()
 	_load_ore_prices()
 	load_game()
 	time_left = day_length()
@@ -71,6 +77,7 @@ func _ready() -> void:
 	phase_changed.emit(phase)
 	day_started.emit(current_day)
 	day_tick.emit(time_left, day_length())
+	_check_cutscenes()  # first launch may fire the Day 1 scene immediately
 
 func _load_ore_prices() -> void:
 	ore_prices.clear()
@@ -248,6 +255,7 @@ func start_next_day() -> void:
 	set_phase(Phase.HOUSE_INTERIOR)
 	day_started.emit(current_day)
 	day_tick.emit(time_left, day_length())
+	_check_cutscenes()
 
 func skip_to_end_of_day() -> void:
 	# Called when player presses E on the bed before going out.
@@ -297,6 +305,7 @@ func reset_game() -> void:
 	total_money_earned = 0.0
 	upgrade_levels.clear()
 	triggered_milestones.clear()
+	triggered_cutscenes.clear()
 	current_day = 1
 	day_dirt_dug = 0.0
 	day_money_earned = 0.0
@@ -387,6 +396,9 @@ func save_game() -> void:
 	var milestones_plain: Dictionary = {}
 	for k in triggered_milestones.keys():
 		milestones_plain[String(k)] = triggered_milestones[k]
+	var cutscenes_plain: Dictionary = {}
+	for k in triggered_cutscenes.keys():
+		cutscenes_plain[String(k)] = triggered_cutscenes[k]
 	var data := {
 		"version": SAVE_VERSION,
 		"saved_at": _last_saved_unix,
@@ -399,6 +411,7 @@ func save_game() -> void:
 		"total_money_earned": total_money_earned,
 		"upgrade_levels": levels_plain,
 		"triggered_milestones": milestones_plain,
+		"triggered_cutscenes": cutscenes_plain,
 		"equipped_id": String(equipped_id),
 		"phase": int(phase),
 		"current_day": current_day,
@@ -445,6 +458,10 @@ func load_game() -> void:
 	var ms_plain: Dictionary = data.get("triggered_milestones", {})
 	for k in ms_plain.keys():
 		triggered_milestones[StringName(k)] = bool(ms_plain[k])
+	triggered_cutscenes.clear()
+	var cs_plain: Dictionary = data.get("triggered_cutscenes", {})
+	for k in cs_plain.keys():
+		triggered_cutscenes[StringName(k)] = bool(cs_plain[k])
 	_last_saved_unix = int(data.get("saved_at", 0))
 	var saved_equipped := String(data.get("equipped_id", "spade"))
 	equipped_id = StringName(saved_equipped)
@@ -587,3 +604,39 @@ func _check_milestones() -> void:
 		if fired:
 			triggered_milestones[m.id] = true
 			milestone_triggered.emit(m)
+
+func _load_cutscenes() -> void:
+	cutscenes.clear()
+	var dir := DirAccess.open(CUTSCENE_DIR)
+	if dir == null:
+		return
+	dir.list_dir_begin()
+	var file := dir.get_next()
+	while file != "":
+		if file.ends_with(".tres") or file.ends_with(".res"):
+			var path := CUTSCENE_DIR + file
+			var res := load(path)
+			if res is Cutscene:
+				cutscenes.append(res)
+		file = dir.get_next()
+	dir.list_dir_end()
+
+func _check_cutscenes() -> void:
+	for c in cutscenes:
+		if c.run_once and triggered_cutscenes.get(c.id, false):
+			continue
+		var fired := false
+		match c.trigger:
+			Cutscene.Trigger.FIRST_LAUNCH:
+				# Plays exactly once on the first day of a fresh save.
+				fired = current_day == 1 and total_money_earned == 0.0 \
+					and not triggered_cutscenes.get(c.id, false)
+			Cutscene.Trigger.DAY_NUMBER:
+				fired = current_day == int(c.threshold)
+			Cutscene.Trigger.MONEY_TOTAL_EARNED:
+				fired = total_money_earned >= c.threshold
+		if fired:
+			if c.run_once:
+				triggered_cutscenes[c.id] = true
+			cutscene_triggered.emit(c)
+			return  # one cutscene per day_started; queue more for later days

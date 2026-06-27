@@ -17,7 +17,7 @@ func _build() -> void:
 		if not _can_show(up):
 			continue
 		var btn := Button.new()
-		btn.text = up.display_name
+		btn.text = up.tier_name_at(GameState.level_of(up.id))
 		btn.toggle_mode = true
 		btn.focus_mode = Control.FOCUS_NONE
 		btn.custom_minimum_size = Vector2(120, 36)

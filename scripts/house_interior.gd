@@ -26,19 +26,33 @@ func _ready() -> void:
 			hook.queue_free()
 			continue
 		_hook_for_tool[tool_id] = hook
-		hook.set_prompt("[E] %s" % up.display_name)
 		hook.interacted.connect(_on_tool_hook_used.bind(tool_id))
 	GameState.equipped_changed.connect(_on_equipped_changed)
 	GameState.phase_changed.connect(_on_phase_changed)
 	GameState.money_changed.connect(_on_money_changed)
+	GameState.upgrade_purchased.connect(_on_upgrade_purchased)
 	_refresh_equipped_label()
 	_refresh_hook_visibility()
+	_refresh_hook_prompts()
 	_reset_player_to_bed_spawn()
 	# Defer initial activation by one frame so cameras can resolve cleanly.
 	call_deferred("_initial_phase_check")
 
 func _on_money_changed(_v: float) -> void:
 	_refresh_hook_visibility()
+
+func _on_upgrade_purchased(_id: StringName, _level: int) -> void:
+	_refresh_hook_prompts()
+	_refresh_equipped_label()
+
+func _refresh_hook_prompts() -> void:
+	for tool_id in _hook_for_tool.keys():
+		var hook: Interactable = _hook_for_tool[tool_id]
+		var up := GameState.get_upgrade(tool_id)
+		if up == null:
+			continue
+		var lvl: int = GameState.level_of(tool_id)
+		hook.set_prompt("[E] %s" % up.tier_name_at(lvl))
 
 func _refresh_hook_visibility() -> void:
 	# Only show tool hooks for tools the player has actually unlocked.
@@ -96,6 +110,7 @@ func _on_phase_changed(p: int) -> void:
 func _refresh_equipped_label() -> void:
 	var up := GameState.equipped_upgrade()
 	if up != null:
-		equipped_label.text = "Equipped: %s" % up.display_name
+		var lvl: int = GameState.level_of(up.id)
+		equipped_label.text = "Equipped: %s" % up.tier_name_at(lvl)
 	else:
 		equipped_label.text = "Equipped: (none)"

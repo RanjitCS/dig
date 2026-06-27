@@ -124,7 +124,9 @@ func _on_bed_used() -> void:
 	GameState.skip_to_end_of_day()
 
 func _on_door_used() -> void:
-	GameState.set_phase(GameState.Phase.DIGGING)
+	# Bedroom door now goes to the corridor (not directly to digging).
+	# The kitchen's back door is the one that starts the dig phase.
+	GameState.set_room(&"corridor", 150.0)
 
 func _on_tool_hook_used(tool_id: StringName) -> void:
 	GameState.equip(tool_id)

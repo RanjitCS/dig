@@ -134,6 +134,11 @@ func set_phase(new_phase: Phase) -> void:
 
 func set_room(room_id: StringName, spawn_x: float = NAN) -> void:
 	# Switches the active house room. spawn_x = NAN means "use the room's default spawn".
+	# Special case: "backyard" is not a house room — it triggers a phase transition
+	# into DIGGING (handled by DigWorld via phase_changed).
+	if room_id == &"backyard":
+		set_phase(Phase.DIGGING)
+		return
 	current_room = room_id
 	room_changed.emit(current_room, spawn_x)
 

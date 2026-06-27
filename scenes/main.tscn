@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://b8dig0main0001"]
+[gd_scene load_steps=14 format=3 uid="uid://b8dig0main0001"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" uid="uid://dig0scene0digworld" path="res://scenes/dig_world.tscn" id="2_world"]
@@ -7,6 +7,12 @@
 [ext_resource type="PackedScene" uid="uid://dig0scene0houseinterior" path="res://scenes/house_interior.tscn" id="5_house"]
 [ext_resource type="Script" path="res://scripts/debug_panel.gd" id="6_debug"]
 [ext_resource type="PackedScene" uid="uid://dig0scene0cutscene" path="res://scenes/cutscene_modal.tscn" id="7_cutscene"]
+[ext_resource type="PackedScene" uid="uid://dig0room0corridor" path="res://scenes/rooms/corridor.tscn" id="8_corridor"]
+[ext_resource type="PackedScene" uid="uid://dig0room0sisters" path="res://scenes/rooms/sisters_room.tscn" id="9_sisters"]
+[ext_resource type="PackedScene" uid="uid://dig0room0parents" path="res://scenes/rooms/parents_room.tscn" id="10_parents"]
+[ext_resource type="PackedScene" uid="uid://dig0room0living" path="res://scenes/rooms/living_room.tscn" id="11_living"]
+[ext_resource type="PackedScene" uid="uid://dig0room0kitchen" path="res://scenes/rooms/kitchen.tscn" id="12_kitchen"]
+[ext_resource type="PackedScene" uid="uid://dig0room0workshop" path="res://scenes/rooms/workshop.tscn" id="13_workshop"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -159,11 +165,30 @@ visible = false
 unique_name_in_owner = true
 visible = false
 
+[node name="Corridor" parent="Root/Body/WorldViewport/Viewport" instance=ExtResource("8_corridor")]
+visible = false
+
+[node name="SistersRoom" parent="Root/Body/WorldViewport/Viewport" instance=ExtResource("9_sisters")]
+visible = false
+
+[node name="ParentsRoom" parent="Root/Body/WorldViewport/Viewport" instance=ExtResource("10_parents")]
+visible = false
+
+[node name="LivingRoom" parent="Root/Body/WorldViewport/Viewport" instance=ExtResource("11_living")]
+visible = false
+
+[node name="Kitchen" parent="Root/Body/WorldViewport/Viewport" instance=ExtResource("12_kitchen")]
+visible = false
+
+[node name="Workshop" parent="Root/Body/WorldViewport/Viewport" instance=ExtResource("13_workshop")]
+visible = false
+
 [node name="ToastLayer" type="CanvasLayer" parent="."]
 layer = 20
 
 [node name="ToastLabel" type="Label" parent="ToastLayer"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(480, 72)
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5

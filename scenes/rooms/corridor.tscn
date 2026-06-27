@@ -1,0 +1,82 @@
+[gd_scene load_steps=5 format=3 uid="uid://dig0room0corridor"]
+
+[ext_resource type="Script" path="res://scripts/room.gd" id="1_room"]
+[ext_resource type="PackedScene" uid="uid://dig0scene0player" path="res://scenes/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" uid="uid://dig0scene0roomdoor" path="res://scenes/room_door.tscn" id="3_door"]
+
+[sub_resource type="RectangleShape2D" id="FloorShape"]
+size = Vector2(2000, 16)
+
+[node name="Corridor" type="Node2D"]
+script = ExtResource("1_room")
+room_id = &"corridor"
+default_spawn_x = 200.0
+
+[node name="Sky" type="ColorRect" parent="."]
+offset_left = -2000.0
+offset_top = -2000.0
+offset_right = 2000.0
+offset_bottom = 0.0
+color = Color(0.22, 0.18, 0.22, 1)
+mouse_filter = 2
+
+[node name="WallBg" type="ColorRect" parent="."]
+offset_left = 0.0
+offset_top = -400.0
+offset_right = 1800.0
+offset_bottom = 0.0
+color = Color(0.32, 0.28, 0.32, 1)
+mouse_filter = 2
+
+[node name="FloorVisual" type="ColorRect" parent="."]
+offset_left = 0.0
+offset_top = -8.0
+offset_right = 1800.0
+offset_bottom = 24.0
+color = Color(0.32, 0.22, 0.18, 1)
+mouse_filter = 2
+
+[node name="Floor" type="StaticBody2D" parent="."]
+position = Vector2(900, 0)
+
+[node name="FloorShape" type="CollisionShape2D" parent="Floor"]
+shape = SubResource("FloorShape")
+
+[node name="RoomLabel" type="Label" parent="."]
+offset_left = 800.0
+offset_top = -380.0
+offset_right = 1000.0
+offset_bottom = -350.0
+text = "Corridor"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.85, 0.78, 0.72, 1)
+mouse_filter = 2
+
+[node name="DoorToBedroom" parent="." instance=ExtResource("3_door")]
+position = Vector2(150, -50)
+prompt_text = "[E] bedroom"
+target_room_id = &"bedroom"
+spawn_x = 240.0
+
+[node name="DoorToSisters" parent="." instance=ExtResource("3_door")]
+position = Vector2(550, -50)
+prompt_text = "[E] sister's room"
+target_room_id = &"sisters_room"
+
+[node name="DoorToParents" parent="." instance=ExtResource("3_door")]
+position = Vector2(1000, -50)
+prompt_text = "[E] parents' room"
+target_room_id = &"parents_room"
+
+[node name="DoorToLiving" parent="." instance=ExtResource("3_door")]
+position = Vector2(1600, -50)
+prompt_text = "[E] downstairs"
+target_room_id = &"living_room"
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+position = Vector2(200, -40)
+
+[node name="Camera2D" type="Camera2D" parent="Player"]
+position_smoothing_enabled = true
+position_smoothing_speed = 6.0

@@ -194,7 +194,7 @@ mouse_filter = 2
 
 [node name="Door" parent="." instance=ExtResource("3_inter")]
 position = Vector2(1280, -80)
-prompt_text = "[E] start day"
+prompt_text = "[E] corridor"
 
 [node name="DoorShape" type="CollisionShape2D" parent="Door"]
 shape = SubResource("DoorShape")

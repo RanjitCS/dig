@@ -1,0 +1,72 @@
+[gd_scene load_steps=5 format=3 uid="uid://dig0room0living"]
+
+[ext_resource type="Script" path="res://scripts/room.gd" id="1_room"]
+[ext_resource type="PackedScene" uid="uid://dig0scene0player" path="res://scenes/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" uid="uid://dig0scene0roomdoor" path="res://scenes/room_door.tscn" id="3_door"]
+
+[sub_resource type="RectangleShape2D" id="FloorShape"]
+size = Vector2(1800, 16)
+
+[node name="LivingRoom" type="Node2D"]
+script = ExtResource("1_room")
+room_id = &"living_room"
+default_spawn_x = 200.0
+
+[node name="Sky" type="ColorRect" parent="."]
+offset_left = -2000.0
+offset_top = -2000.0
+offset_right = 2000.0
+offset_bottom = 0.0
+color = Color(0.20, 0.22, 0.20, 1)
+mouse_filter = 2
+
+[node name="WallBg" type="ColorRect" parent="."]
+offset_left = 0.0
+offset_top = -400.0
+offset_right = 1600.0
+offset_bottom = 0.0
+color = Color(0.36, 0.34, 0.28, 1)
+mouse_filter = 2
+
+[node name="FloorVisual" type="ColorRect" parent="."]
+offset_left = 0.0
+offset_top = -8.0
+offset_right = 1600.0
+offset_bottom = 24.0
+color = Color(0.42, 0.30, 0.22, 1)
+mouse_filter = 2
+
+[node name="Floor" type="StaticBody2D" parent="."]
+position = Vector2(800, 0)
+
+[node name="FloorShape" type="CollisionShape2D" parent="Floor"]
+shape = SubResource("FloorShape")
+
+[node name="RoomLabel" type="Label" parent="."]
+offset_left = 700.0
+offset_top = -380.0
+offset_right = 900.0
+offset_bottom = -350.0
+text = "Living Room"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.85, 0.78, 0.72, 1)
+mouse_filter = 2
+
+[node name="DoorToCorridor" parent="." instance=ExtResource("3_door")]
+position = Vector2(120, -50)
+prompt_text = "[E] upstairs"
+target_room_id = &"corridor"
+spawn_x = 1600.0
+
+[node name="DoorToKitchen" parent="." instance=ExtResource("3_door")]
+position = Vector2(1500, -50)
+prompt_text = "[E] kitchen"
+target_room_id = &"kitchen"
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+position = Vector2(200, -40)
+
+[node name="Camera2D" type="Camera2D" parent="Player"]
+position_smoothing_enabled = true
+position_smoothing_speed = 6.0

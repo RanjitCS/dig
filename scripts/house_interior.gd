@@ -10,6 +10,7 @@ const DEFAULT_SPAWN_X: float = 160.0
 @onready var camera: Camera2D = $Player/Camera2D
 @onready var bed: Interactable = $Bed
 @onready var door: Interactable = $Door
+@onready var window: Interactable = $Window
 @onready var tool_hooks: Node2D = $ToolHooks
 @onready var equipped_label: Label = $EquippedLabel
 
@@ -18,6 +19,7 @@ var _hook_for_tool: Dictionary = {}
 func _ready() -> void:
 	bed.interacted.connect(_on_bed_used)
 	door.interacted.connect(_on_door_used)
+	window.interacted.connect(_on_window_used)
 	# Each ToolHook child is named like "Spade", "Pickaxe" — id derived from name.
 	for child in tool_hooks.get_children():
 		if not (child is Interactable):
@@ -126,6 +128,12 @@ func _on_bed_used() -> void:
 func _on_door_used() -> void:
 	# Bedroom door now goes to the corridor. Spawn at corridor's bedroom-door (x=150).
 	GameState.set_room(&"corridor", 200.0)
+
+func _on_window_used() -> void:
+	# Debug/quick-route: window + ladder lets you skip walking through the house
+	# and drop straight into the backyard. In future this becomes an unlockable
+	# upgrade (the ladder); always available now.
+	GameState.set_phase(GameState.Phase.DIGGING)
 
 func _on_tool_hook_used(tool_id: StringName) -> void:
 	GameState.equip(tool_id)

@@ -1,10 +1,11 @@
-[gd_scene load_steps=6 format=3 uid="uid://b8dig0main0001"]
+[gd_scene load_steps=7 format=3 uid="uid://b8dig0main0001"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" uid="uid://dig0scene0digworld" path="res://scenes/dig_world.tscn" id="2_world"]
 [ext_resource type="Script" path="res://scripts/tool_selector.gd" id="3_toolsel"]
 [ext_resource type="PackedScene" uid="uid://dig0scene0endofday" path="res://scenes/end_of_day.tscn" id="4_eod"]
 [ext_resource type="PackedScene" uid="uid://dig0scene0houseinterior" path="res://scenes/house_interior.tscn" id="5_house"]
+[ext_resource type="Script" path="res://scripts/debug_panel.gd" id="6_debug"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -180,3 +181,41 @@ one_shot = true
 
 [node name="EndOfDay" parent="." instance=ExtResource("4_eod")]
 unique_name_in_owner = true
+
+[node name="DebugPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = -56.0
+offset_right = 320.0
+offset_bottom = -8.0
+grow_vertical = 0
+modulate = Color(1, 1, 1, 0.85)
+script = ExtResource("6_debug")
+
+[node name="Box" type="HBoxContainer" parent="DebugPanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="MoneyButton" type="Button" parent="DebugPanel/Box"]
+layout_mode = 2
+text = "+$1000"
+theme_override_font_sizes/font_size = 11
+
+[node name="SkipButton" type="Button" parent="DebugPanel/Box"]
+layout_mode = 2
+text = "Skip Day"
+theme_override_font_sizes/font_size = 11
+
+[node name="UnlockButton" type="Button" parent="DebugPanel/Box"]
+layout_mode = 2
+text = "Unlock All"
+theme_override_font_sizes/font_size = 11
+
+[node name="FillButton" type="Button" parent="DebugPanel/Box"]
+layout_mode = 2
+text = "Fill Pack"
+theme_override_font_sizes/font_size = 11

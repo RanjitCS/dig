@@ -29,6 +29,7 @@ func _ready() -> void:
 	GameState.day_ended.connect(_on_day_ended_for_sell)
 	GameState.deposited_changed.connect(_on_deposited_changed)
 	GameState.carried_changed.connect(_on_carried_changed)
+	GameState.carried_lost.connect(_on_carried_lost)
 	GameState.phase_changed.connect(_on_phase_changed)
 	dig_world.deepest_changed.connect(_on_deepest_changed)
 	toast_timer.timeout.connect(_hide_toast)
@@ -45,6 +46,16 @@ func _on_dirt_changed(_v: float) -> void:
 func _on_carried_changed() -> void:
 	_refresh_dirt()
 	_refresh_sell_button()
+
+func _on_carried_lost(lost_dirt: float, lost_ore_count: int) -> void:
+	var parts: Array = []
+	if lost_dirt > 0.0:
+		parts.append("%s dirt" % _fmt(lost_dirt))
+	if lost_ore_count > 0:
+		parts.append("%d ore" % lost_ore_count)
+	if parts.is_empty():
+		return
+	_show_toast("Day ended.\nLost %s in your pack." % ", ".join(parts))
 
 func _on_deposited_changed(v: float) -> void:
 	var diff: float = v - _last_pile

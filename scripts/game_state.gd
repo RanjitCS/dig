@@ -46,6 +46,7 @@ var _last_saved_unix: int = 0
 
 signal dirt_changed(new_amount: float)
 signal carried_changed  # fires when dirt or carried_ore changes
+signal carried_lost(lost_dirt: float, lost_ore_count: int)  # day ended with stuff in pack
 signal deposited_changed(new_amount: float)
 signal money_changed(new_amount: float)
 signal upgrade_purchased(upgrade_id: StringName, new_level: int)
@@ -218,9 +219,17 @@ func sell_all_dirt() -> float:
 func _end_day() -> void:
 	day_paused = true
 	time_left = 0.0
-	# Anything still in the backpack (dirt or ore) gets dumped on the pile — no waste.
-	if dirt > 0.0 or not carried_ore.is_empty():
-		deposit_carried()
+	# Carried inventory is LOST if you didn't make it back to deposit in time.
+	# Real punishment for getting stuck underground when the timer runs out.
+	var lost_dirt: float = dirt
+	var lost_ore_count: int = carried_ore_count()
+	if lost_dirt > 0.0 or lost_ore_count > 0:
+		dirt = 0.0
+		carried_ore.clear()
+		dirt_changed.emit(dirt)
+		carried_changed.emit()
+		if lost_dirt > 0.0 or lost_ore_count > 0:
+			carried_lost.emit(lost_dirt, lost_ore_count)
 	set_phase(Phase.END_OF_DAY)
 	day_ended.emit(current_day, day_dirt_dug, day_money_earned)
 

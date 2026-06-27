@@ -30,10 +30,33 @@ func _ready() -> void:
 		hook.interacted.connect(_on_tool_hook_used.bind(tool_id))
 	GameState.equipped_changed.connect(_on_equipped_changed)
 	GameState.phase_changed.connect(_on_phase_changed)
+	GameState.money_changed.connect(_on_money_changed)
 	_refresh_equipped_label()
+	_refresh_hook_visibility()
 	_reset_player_to_bed_spawn()
 	# Defer initial activation by one frame so cameras can resolve cleanly.
 	call_deferred("_initial_phase_check")
+
+func _on_money_changed(_v: float) -> void:
+	_refresh_hook_visibility()
+
+func _refresh_hook_visibility() -> void:
+	# Only show tool hooks for tools the player has actually unlocked.
+	# (unlock gated on total money earned per Upgrade.unlock_money.)
+	for tool_id in _hook_for_tool.keys():
+		var hook: Interactable = _hook_for_tool[tool_id]
+		var unlocked: bool = GameState.is_unlocked(tool_id)
+		hook.visible = unlocked
+		hook.enabled = unlocked
+		# Also hide any sibling visual children that match the tool name + "Visual".
+		# (Spade has a SpadeVisual sibling on tool_hooks, etc.)
+		var visual_name := String(tool_id).capitalize() + "Visual"
+		var v: Node = tool_hooks.get_node_or_null(visual_name)
+		if v == null:
+			# Visuals are children OF the hook itself in this scene tree.
+			v = hook.get_node_or_null(visual_name)
+		if v != null and v is CanvasItem:
+			(v as CanvasItem).visible = unlocked
 
 func _initial_phase_check() -> void:
 	_on_phase_changed(GameState.phase)

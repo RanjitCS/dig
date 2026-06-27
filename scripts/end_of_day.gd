@@ -19,6 +19,8 @@ const CATEGORY_ORDER := [
 @onready var day_label: Label = %DayLabel
 @onready var earnings_label: Label = %EarningsLabel
 @onready var dirt_label: Label = %DirtLabel
+@onready var pile_label: Label = %PileLabel
+@onready var sell_pile_button: Button = %SellPileButton
 @onready var upgrades_list: VBoxContainer = %UpgradesList
 @onready var continue_button: Button = %ContinueButton
 
@@ -27,17 +29,21 @@ var rows: Array = []
 func _ready() -> void:
 	visible = false
 	continue_button.pressed.connect(_on_continue)
+	sell_pile_button.pressed.connect(_on_sell_pile)
 	GameState.day_ended.connect(_on_day_ended)
 	GameState.day_started.connect(_on_day_started)
 	GameState.upgrade_purchased.connect(_on_upgrade_purchased)
 	GameState.money_changed.connect(_on_money_changed)
+	GameState.deposited_changed.connect(_on_deposited_changed)
 	_build_upgrade_rows()
+	_refresh_pile_row()
 
 func _on_day_ended(day: int, dirt_dug: float, money_earned: float) -> void:
 	day_label.text = "End of Day %d" % day
 	earnings_label.text = "Earned $%s" % _fmt(money_earned)
 	dirt_label.text = "Dug %s dirt" % _fmt(dirt_dug)
 	_refresh_rows()
+	_refresh_pile_row()
 	visible = true
 
 func _on_day_started(_day: int) -> void:
@@ -51,6 +57,20 @@ func _on_upgrade_purchased(_id: StringName, _level: int) -> void:
 
 func _on_money_changed(_v: float) -> void:
 	_refresh_rows()
+
+func _on_deposited_changed(_v: float) -> void:
+	_refresh_pile_row()
+
+func _on_sell_pile() -> void:
+	GameState.sell_deposited_pile()
+	_refresh_pile_row()
+
+func _refresh_pile_row() -> void:
+	var amount: float = GameState.deposited_dirt
+	var money_mult: float = 1.0 + GameState._sum_effect(Upgrade.Effect.CLICK_MONEY_MULT)
+	var worth: float = amount * GameState.DIRT_PRICE_PER_UNIT * money_mult
+	pile_label.text = "Pile: %s dirt   ($%s)" % [_fmt(amount), _fmt(worth)]
+	sell_pile_button.disabled = amount <= 0.0
 
 func _build_upgrade_rows() -> void:
 	for c in upgrades_list.get_children():

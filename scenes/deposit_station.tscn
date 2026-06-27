@@ -1,0 +1,60 @@
+[gd_scene load_steps=3 format=3 uid="uid://dig0scene0deposit"]
+
+[ext_resource type="Script" path="res://scripts/deposit_station.gd" id="1_deposit"]
+
+[sub_resource type="RectangleShape2D" id="StationShape"]
+size = Vector2(64, 64)
+
+[node name="DepositStation" type="Area2D"]
+monitoring = true
+monitorable = true
+collision_layer = 0
+collision_mask = 1
+script = ExtResource("1_deposit")
+
+[node name="StationShape" type="CollisionShape2D" parent="."]
+position = Vector2(0, -32)
+shape = SubResource("StationShape")
+
+[node name="Marker" type="ColorRect" parent="."]
+offset_left = -32.0
+offset_top = -8.0
+offset_right = 32.0
+offset_bottom = 0.0
+color = Color(0.45, 0.32, 0.18, 1)
+mouse_filter = 2
+
+[node name="SignLabel" type="Label" parent="."]
+offset_left = -64.0
+offset_top = -80.0
+offset_right = 64.0
+offset_bottom = -60.0
+text = "deposit"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 0.85)
+mouse_filter = 2
+
+[node name="PromptLabel" type="Label" parent="."]
+offset_left = -80.0
+offset_top = -110.0
+offset_right = 80.0
+offset_bottom = -85.0
+text = "[E] deposit"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(1, 0.95, 0.7, 1)
+mouse_filter = 2
+
+[node name="PileVisual" type="ColorRect" parent="."]
+offset_left = -32.0
+offset_top = -4.0
+offset_right = 32.0
+offset_bottom = 0.0
+color = Color(0.35, 0.25, 0.15, 1)
+mouse_filter = 2
+visible = false
+
+[node name="Sprite" type="Sprite2D" parent="."]
+visible = false
+centered = false

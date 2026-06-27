@@ -3,6 +3,7 @@ extends Control
 const UpgradeRowScene := preload("res://scenes/upgrade_row.tscn")
 
 @onready var dirt_label: Label = %DirtLabel
+@onready var pile_label: Label = %PileLabel
 @onready var money_label: Label = %MoneyLabel
 @onready var depth_label: Label = %DepthLabel
 @onready var day_label: Label = %DayLabel
@@ -17,6 +18,7 @@ const UpgradeRowScene := preload("res://scenes/upgrade_row.tscn")
 
 var rows: Array = []
 var deepest_dug: int = 0
+var _last_pile: float = 0.0
 
 func _ready() -> void:
 	reset_button.pressed.connect(_on_reset_pressed)
@@ -29,9 +31,11 @@ func _ready() -> void:
 	GameState.day_tick.connect(_on_day_tick)
 	GameState.day_started.connect(_on_day_started)
 	GameState.day_ended.connect(_on_day_ended_for_sell)
+	GameState.deposited_changed.connect(_on_deposited_changed)
 	dig_world.deepest_changed.connect(_on_deepest_changed)
 	toast_timer.timeout.connect(_hide_toast)
 	toast_label.visible = false
+	_last_pile = GameState.deposited_dirt
 	_build_upgrade_rows()
 	_refresh_all()
 	_refresh_sell_button()
@@ -40,6 +44,14 @@ func _on_dirt_changed(_v: float) -> void:
 	_refresh_dirt()
 	_refresh_rows()
 	_refresh_sell_button()
+
+func _on_deposited_changed(v: float) -> void:
+	var diff: float = v - _last_pile
+	_last_pile = v
+	_refresh_pile()
+	if diff > 0.0 and not GameState.day_paused:
+		# Only toast on mid-day deposits, not on end-of-day auto-dump or sell.
+		_show_toast("Deposited %s dirt." % _fmt(diff))
 
 func _on_money_changed(_v: float) -> void:
 	_refresh_money()
@@ -106,6 +118,7 @@ func _build_upgrade_rows() -> void:
 
 func _refresh_all() -> void:
 	_refresh_dirt()
+	_refresh_pile()
 	_refresh_money()
 	_refresh_depth()
 	_refresh_rows()
@@ -114,6 +127,9 @@ func _refresh_all() -> void:
 
 func _refresh_dirt() -> void:
 	dirt_label.text = "Dirt: %s / %s" % [_fmt(GameState.dirt), _fmt(GameState.backpack_capacity())]
+
+func _refresh_pile() -> void:
+	pile_label.text = "Pile: %s" % _fmt(GameState.deposited_dirt)
 
 func _refresh_money() -> void:
 	money_label.text = "$%s" % _fmt(GameState.money)

@@ -3,14 +3,15 @@ extends Node
 const UPGRADE_DIR: String = "res://resources/upgrades/"
 const MILESTONE_DIR: String = "res://resources/milestones/"
 const SAVE_PATH: String = "user://save.json"
-const SAVE_VERSION: int = 2
+const SAVE_VERSION: int = 3
 const DIRT_PRICE_PER_UNIT: float = 0.02
 const AUTOSAVE_INTERVAL_SEC: float = 10.0
 const OFFLINE_PROGRESS_CAP_SEC: float = 60.0 * 60.0 * 12.0  # 12 hours
 const BASE_DAY_LENGTH_SEC: float = 30.0
 const BASE_BACKPACK_CAPACITY: float = 30.0
 
-var dirt: float = 0.0
+var dirt: float = 0.0              # carried (capped at backpack_capacity)
+var deposited_dirt: float = 0.0    # pile at the surface (uncapped, sells at end of day)
 var money: float = 0.0
 var total_dirt_dug: float = 0.0
 var total_money_earned: float = 0.0
@@ -35,6 +36,7 @@ var _autosave_accum: float = 0.0
 var _last_saved_unix: int = 0
 
 signal dirt_changed(new_amount: float)
+signal deposited_changed(new_amount: float)
 signal money_changed(new_amount: float)
 signal upgrade_purchased(upgrade_id: StringName, new_level: int)
 signal milestone_triggered(milestone: Milestone)
@@ -83,6 +85,30 @@ func backpack_capacity() -> float:
 func backpack_full() -> bool:
 	return dirt >= backpack_capacity()
 
+func deposit_carried() -> float:
+	# Transfer everything in the backpack to the deposit pile. Returns amount moved.
+	if dirt <= 0.0:
+		return 0.0
+	var moved := dirt
+	deposited_dirt += moved
+	dirt = 0.0
+	dirt_changed.emit(dirt)
+	deposited_changed.emit(deposited_dirt)
+	return moved
+
+func sell_deposited_pile() -> float:
+	# Convert deposit pile to money. End-of-day moment.
+	if deposited_dirt <= 0.0:
+		return 0.0
+	var money_mult := 1.0 + _sum_effect(Upgrade.Effect.CLICK_MONEY_MULT)
+	var earned := deposited_dirt * DIRT_PRICE_PER_UNIT * money_mult
+	deposited_dirt = 0.0
+	deposited_changed.emit(deposited_dirt)
+	_add_money(earned)
+	return earned
+
+# Legacy helper kept for the debug Sell button — sells whatever you carry,
+# bypassing the deposit pile.
 func sell_all_dirt() -> float:
 	if dirt <= 0.0:
 		return 0.0
@@ -96,6 +122,9 @@ func sell_all_dirt() -> float:
 func _end_day() -> void:
 	day_paused = true
 	time_left = 0.0
+	# Anything still in the backpack gets dumped on the pile — no waste.
+	if dirt > 0.0:
+		deposit_carried()
 	day_ended.emit(current_day, day_dirt_dug, day_money_earned)
 
 func start_next_day() -> void:
@@ -143,6 +172,7 @@ func buy_upgrade(upgrade_id: StringName) -> bool:
 
 func reset_game() -> void:
 	dirt = 0.0
+	deposited_dirt = 0.0
 	money = 0.0
 	total_dirt_dug = 0.0
 	total_money_earned = 0.0
@@ -158,6 +188,7 @@ func reset_game() -> void:
 	dirt_changed.emit(dirt)
 	money_changed.emit(money)
 	equipped_changed.emit(equipped_id)
+	deposited_changed.emit(deposited_dirt)
 	world_reset_requested.emit()
 	day_started.emit(current_day)
 	day_tick.emit(time_left, day_length())
@@ -238,6 +269,7 @@ func save_game() -> void:
 		"version": SAVE_VERSION,
 		"saved_at": _last_saved_unix,
 		"dirt": dirt,
+		"deposited_dirt": deposited_dirt,
 		"money": money,
 		"total_dirt_dug": total_dirt_dug,
 		"total_money_earned": total_money_earned,
@@ -274,6 +306,7 @@ func load_game() -> void:
 		push_warning("Save version mismatch (%d != %d); starting fresh." % [int(data.get("version", 0)), SAVE_VERSION])
 		return
 	dirt = float(data.get("dirt", 0.0))
+	deposited_dirt = float(data.get("deposited_dirt", 0.0))
 	money = float(data.get("money", 0.0))
 	total_dirt_dug = float(data.get("total_dirt_dug", 0.0))
 	total_money_earned = float(data.get("total_money_earned", 0.0))
@@ -293,6 +326,7 @@ func load_game() -> void:
 	day_dirt_dug = float(data.get("day_dirt_dug", 0.0))
 	day_money_earned = float(data.get("day_money_earned", 0.0))
 	dirt_changed.emit(dirt)
+	deposited_changed.emit(deposited_dirt)
 	money_changed.emit(money)
 	equipped_changed.emit(equipped_id)
 	_apply_offline_progress()

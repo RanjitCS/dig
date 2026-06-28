@@ -49,18 +49,30 @@ Or stay at 48×48 native blocks and just draw bigger. More detail per block, slo
 
 ## 3. Pick a palette
 
-This is the single most important tip. **Pick a 16- or 32-color palette before drawing.** Use only those colors. This is the difference between "kid's drawing" and "looks like a game."
+This is the single most important tip. **Pick a palette before drawing.** Use only those colors. This is the difference between "kid's drawing" and "looks like a game."
 
 **Free palettes:** [lospec.com](https://lospec.com/palette-list)
 
-Recommended starters for Dig's tone (melancholic, earthy):
+**Top pick: Apollo (46 colors)** by AdamCYounis — [lospec.com/palette-list/apollo](https://lospec.com/palette-list/apollo)
 
-- **Resurrect 64** — moody, fits the story
-- **AAP-64** — warm, gentle
-- **Endesga 32** — vibrant, general-purpose
-- **NA16 / DB16** — classic 16-color retro palettes
+Why Apollo over a general palette (decided 2026-06-28, after checking how dirt-heavy games handle palettes):
+- This is an **all-underground game** — dirt, stone, and ore fill the screen. We need **value depth in browns and greys**, not hue variety across the whole rainbow.
+- Apollo is built as **8 deep dark→light ramps**: a 6-step brown ramp, adjacent maroon + orange-brown ramps (great for dirt shadow hue-shifting), and a **9-step grey ramp** for stone/bedrock. Plus saturated blues/greens/reds/purples left over for ore/gem accents (coal, iron, gem, copper, silver).
+- Bonus: it's by AdamCYounis, the same teacher whose tutorials are recommended below — consistent mental model.
+- You'll use ~25-30 of its 46 colors. (A general 64-color palette like Resurrect 64 wastes most of its colors on hues an underground game never shows — only ~10-15 usable.)
 
-**Top pick:** Resurrect 64. The protagonist's silence and the family's quiet weight benefit from muted earth tones.
+**Caveat:** even Apollo has only ~6 true browns. Since dirt is on screen constantly, it's a justified exception to add **1-2 custom dark-brown swatches** to the palette panel (and reuse those exact swatches everywhere). Add them *to* the palette, don't free-pick.
+
+Other earth-toned options if Apollo doesn't click: **Oil 6** (tiny, very brown/muddy), **AAP-64** (broad but warm). But start with Apollo.
+
+### One palette for the WHOLE game — do NOT split (decided 2026-06-28)
+
+Use Apollo for everything — underground, house, characters, UI. Do **not** use a separate palette for the house/buildings.
+
+- **Cohesion** is what makes it look like one game. The player crosses house↔dig constantly; two unrelated palettes would clash every time. Stardew / Terraria / SteamWorld Dig all use one unified palette across interior, exterior, and underground.
+- Apollo is a full 46-color palette (8 hue ramps) — its browns/greys cover dirt and stone, and its blues/greens/purples/reds cover sky, plants, fabric, windows, furniture, clothes, UI. It's general enough for the house AND deep enough for the dirt.
+- **Get tonal variety by emphasis, not by splitting:** lean on the brown + dark-grey ramps underground (enclosed, earthy); pull in warmer browns + soft accents (a blue window, a warm lamp, a green plant) in the house. Same palette, different selection. That gives the cozy-house-vs-lonely-hole mood without breaking cohesion.
+- A deliberate warm/cold house-vs-hole contrast is a valid *late-stage artistic* choice, but it'd still be sub-ranges of one master palette, not two unrelated sets. Not a beginner starting point.
 
 ---
 

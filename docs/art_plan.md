@@ -108,6 +108,23 @@ Each is an evening's work for a beginner, getting faster. **Don't try to make an
 
 ---
 
+## 6b. Dirt is grainy noise, NOT a lit cube (important correction)
+
+The single most common beginner mistake on a dirt tile: shading it like a crate — strong top-left highlight, big bottom-right shadow wedge, hard outline. That reads as a chocolate block, not soil.
+
+**Dirt is soft, grainy texture.** The recipe that actually works:
+
+1. Flat-fill the whole tile in the **mid-brown**.
+2. With the **darkest brown**, 1px pencil, scatter **~40-60 single pixels** randomly across the whole tile. No pattern — like gentle TV static. Some touching, mostly not.
+3. With the **lighter tan**, scatter **~20-30 single pixels**, weighted slightly toward the top.
+4. With **maroon / near-black**, make **2-3 tiny 3-pixel clusters** = pebble-holes. That's the only place the darkest color goes.
+5. Only *now* add a **very subtle** gradient: darken the bottom ~3-4 rows by one shade, lighten the top ~2 rows by one shade. Gentle. No hard edge.
+6. View → Tiled Mode. Make sure no obvious repeating clump and the seams don't line up. Move speckle away from the very edges if they do.
+
+The mental shift: **textured noise, not a shaded 3D cube.** The lit-cube approach (strong corner highlight + shadow wedge) is correct for *crates, stone bricks, metal* — hard-edged objects. Soft materials (dirt, sand, grass) are mostly grain with only a whisper of directional light.
+
+**References to study side-by-side:** Terraria dirt block, Stardew Valley dirt, SteamWorld Dig. Match the *density of speckle*, not the lighting.
+
 ## 7. Dropping a sprite into the game
 
 Once you have a `.png`:

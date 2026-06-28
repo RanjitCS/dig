@@ -4,8 +4,9 @@ const UPGRADE_DIR: String = "res://resources/upgrades/"
 const MILESTONE_DIR: String = "res://resources/milestones/"
 const BLOCK_DIR: String = "res://resources/blocks/"
 const CUTSCENE_DIR: String = "res://resources/cutscenes/"
+const HELPER_DIR: String = "res://resources/helpers/"
 const SAVE_PATH: String = "user://save.json"
-const SAVE_VERSION: int = 7
+const SAVE_VERSION: int = 8
 const DEFAULT_ROOM: StringName = &"bedroom"
 
 enum Phase { HOUSE_INTERIOR, DIGGING, END_OF_DAY }
@@ -33,6 +34,10 @@ var triggered_milestones: Dictionary = {}  # StringName -> bool
 
 var cutscenes: Array[Cutscene] = []
 var triggered_cutscenes: Dictionary = {}  # StringName -> bool
+
+var helpers: Array[Helper] = []
+var helper_levels: Dictionary = {}  # StringName helper_id -> int (count hired)
+var _helper_ore_accum: Dictionary = {}  # StringName ore_id -> float (fractional carryover)
 
 var equipped_id: StringName = &"spade"
 
@@ -68,11 +73,13 @@ signal equipped_changed(upgrade_id: StringName)
 signal day_tick(time_left: float, day_length: float)
 signal day_ended(day: int, dirt_dug: float, money_earned: float)
 signal day_started(day: int)
+signal helper_hired(helper_id: StringName, new_level: int)
 
 func _ready() -> void:
 	_load_upgrades()
 	_load_milestones()
 	_load_cutscenes()
+	_load_helpers()
 	_load_ore_prices()
 	load_game()
 	time_left = day_length()
@@ -117,6 +124,7 @@ func _process(delta: float) -> void:
 			_add_dirt(auto_dirt * delta)
 		if auto_money > 0.0:
 			_add_money(auto_money * delta)
+		_run_helpers(delta)
 		time_left -= delta
 		day_tick.emit(time_left, day_length())
 		if time_left <= 0.0:
@@ -125,6 +133,23 @@ func _process(delta: float) -> void:
 	if _autosave_accum >= AUTOSAVE_INTERVAL_SEC:
 		_autosave_accum = 0.0
 		save_game()
+
+# Helpers dig straight into the deposit PILE (not the backpack) — they haul
+# their own. Runs during active DIGGING; offline accrual handled separately.
+func _run_helpers(delta: float) -> void:
+	var d := helper_dirt_per_sec() * delta
+	if d > 0.0:
+		_deposit_dirt_directly(d)
+	var ore := helper_ore_per_sec_all()  # Dict ore_id -> per-sec
+	for ore_id in ore.keys():
+		var amount: float = float(ore[ore_id]) * delta
+		_helper_ore_accum[ore_id] = float(_helper_ore_accum.get(ore_id, 0.0)) + amount
+		# Whole units drop into the pile; fractional carries over.
+		var whole: int = int(floor(_helper_ore_accum[ore_id]))
+		if whole > 0:
+			_helper_ore_accum[ore_id] -= float(whole)
+			deposited_ore[ore_id] = int(deposited_ore.get(ore_id, 0)) + whole
+			deposited_changed.emit(deposited_dirt)
 
 func set_phase(new_phase: Phase) -> void:
 	if phase == new_phase:
@@ -325,6 +350,8 @@ func reset_game() -> void:
 	upgrade_levels.clear()
 	triggered_milestones.clear()
 	triggered_cutscenes.clear()
+	helper_levels.clear()
+	_helper_ore_accum.clear()
 	current_day = 1
 	day_dirt_dug = 0.0
 	day_money_earned = 0.0
@@ -420,6 +447,9 @@ func save_game() -> void:
 	var cutscenes_plain: Dictionary = {}
 	for k in triggered_cutscenes.keys():
 		cutscenes_plain[String(k)] = triggered_cutscenes[k]
+	var helpers_plain: Dictionary = {}
+	for k in helper_levels.keys():
+		helpers_plain[String(k)] = helper_levels[k]
 	var data := {
 		"version": SAVE_VERSION,
 		"saved_at": _last_saved_unix,
@@ -433,6 +463,7 @@ func save_game() -> void:
 		"upgrade_levels": levels_plain,
 		"triggered_milestones": milestones_plain,
 		"triggered_cutscenes": cutscenes_plain,
+		"helper_levels": helpers_plain,
 		"equipped_id": String(equipped_id),
 		"phase": int(phase),
 		"current_room": String(current_room),
@@ -484,6 +515,10 @@ func load_game() -> void:
 	var cs_plain: Dictionary = data.get("triggered_cutscenes", {})
 	for k in cs_plain.keys():
 		triggered_cutscenes[StringName(k)] = bool(cs_plain[k])
+	helper_levels.clear()
+	var hl_plain: Dictionary = data.get("helper_levels", {})
+	for k in hl_plain.keys():
+		helper_levels[StringName(k)] = int(hl_plain[k])
 	_last_saved_unix = int(data.get("saved_at", 0))
 	var saved_equipped := String(data.get("equipped_id", "spade"))
 	equipped_id = StringName(saved_equipped)
@@ -499,6 +534,11 @@ func load_game() -> void:
 	money_changed.emit(money)
 	equipped_changed.emit(equipped_id)
 	_apply_offline_progress()
+	# Capped offline helper production since last save.
+	if _last_saved_unix > 0:
+		var elapsed: float = float(int(Time.get_unix_time_from_system()) - _last_saved_unix)
+		if elapsed > 0.0:
+			_apply_helper_offline(elapsed)
 
 func _apply_offline_progress() -> void:
 	if _last_saved_unix <= 0:
@@ -648,6 +688,119 @@ func _load_cutscenes() -> void:
 		file = dir.get_next()
 	dir.list_dir_end()
 	print("[cutscene] total loaded: ", cutscenes.size())
+
+# --- Helpers (automation) -------------------------------------------------
+
+func _load_helpers() -> void:
+	helpers.clear()
+	var dir := DirAccess.open(HELPER_DIR)
+	if dir == null:
+		return
+	dir.list_dir_begin()
+	var file := dir.get_next()
+	while file != "":
+		if file.ends_with(".tres") or file.ends_with(".res"):
+			var res := load(HELPER_DIR + file)
+			if res is Helper:
+				helpers.append(res)
+		file = dir.get_next()
+	dir.list_dir_end()
+	helpers.sort_custom(func(a: Helper, b: Helper) -> bool:
+		return a.unlock_money < b.unlock_money
+	)
+
+func get_helper(helper_id: StringName) -> Helper:
+	for h in helpers:
+		if h.id == helper_id:
+			return h
+	return null
+
+func helper_level(helper_id: StringName) -> int:
+	return helper_levels.get(helper_id, 0)
+
+func helper_cost(helper_id: StringName) -> float:
+	var h := get_helper(helper_id)
+	if h == null:
+		return INF
+	if h.is_maxed(helper_level(helper_id)):
+		return INF
+	return h.cost_at(helper_level(helper_id))
+
+func helper_unlocked(helper_id: StringName) -> bool:
+	var h := get_helper(helper_id)
+	if h == null:
+		return false
+	return total_money_earned >= h.unlock_money
+
+func can_afford_helper(helper_id: StringName) -> bool:
+	var h := get_helper(helper_id)
+	if h == null or h.is_maxed(helper_level(helper_id)):
+		return false
+	return money >= helper_cost(helper_id)
+
+func hire_helper(helper_id: StringName) -> bool:
+	var h := get_helper(helper_id)
+	if h == null or h.is_maxed(helper_level(helper_id)):
+		return false
+	var cost := helper_cost(helper_id)
+	if money < cost:
+		return false
+	money -= cost
+	money_changed.emit(money)
+	var lvl: int = helper_levels.get(helper_id, 0) + 1
+	helper_levels[helper_id] = lvl
+	helper_hired.emit(helper_id, lvl)
+	return true
+
+# Total passive dirt/sec across all hired helpers.
+func helper_dirt_per_sec() -> float:
+	var total := 0.0
+	for h in helpers:
+		var lvl: int = helper_levels.get(h.id, 0)
+		if lvl > 0 and h.dirt_per_sec > 0.0:
+			total += h.dirt_per_sec * float(lvl)
+	return total
+
+# Total passive ore/sec per ore type across all hired helpers.
+func helper_ore_per_sec_all() -> Dictionary:
+	var out: Dictionary = {}
+	for h in helpers:
+		var lvl: int = helper_levels.get(h.id, 0)
+		if lvl > 0 and h.ore_id != &"" and h.ore_per_sec > 0.0:
+			out[h.ore_id] = float(out.get(h.ore_id, 0.0)) + h.ore_per_sec * float(lvl)
+	return out
+
+func has_any_helpers() -> bool:
+	for k in helper_levels.keys():
+		if int(helper_levels[k]) > 0:
+			return true
+	return false
+
+# Drop dirt straight into the deposit pile (helpers bypass the backpack).
+func _deposit_dirt_directly(amount: float) -> void:
+	if amount <= 0.0:
+		return
+	deposited_dirt += amount
+	total_dirt_dug += amount
+	deposited_changed.emit(deposited_dirt)
+
+# Apply capped offline helper production. Called on load with elapsed seconds.
+func _apply_helper_offline(elapsed_sec: float) -> void:
+	if not has_any_helpers():
+		return
+	# Cap at one in-game day of real seconds, at a reduced (50%) rate.
+	var capped: float = min(elapsed_sec, BASE_DAY_LENGTH_SEC)
+	var rate := 0.5
+	var d := helper_dirt_per_sec() * capped * rate
+	if d > 0.0:
+		_deposit_dirt_directly(d)
+	var ore := helper_ore_per_sec_all()
+	for ore_id in ore.keys():
+		var units: int = int(floor(float(ore[ore_id]) * capped * rate))
+		if units > 0:
+			deposited_ore[ore_id] = int(deposited_ore.get(ore_id, 0)) + units
+	if d > 0.0 or not ore.is_empty():
+		deposited_changed.emit(deposited_dirt)
 
 func _check_cutscenes() -> void:
 	print("[cutscene] check: day=", current_day, " money_earned=", total_money_earned, " loaded=", cutscenes.size())

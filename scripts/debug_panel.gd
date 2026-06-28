@@ -30,8 +30,10 @@ func _on_skip() -> void:
 		GameState.skip_to_end_of_day()
 
 func _on_unlock() -> void:
-	# Big total_money_earned so every upgrade unlocks. Trigger milestone checks too.
+	# Big total_money_earned so every upgrade/helper unlocks. Also grant spendable
+	# cash so you can actually buy them. Trigger milestone checks too.
 	GameState.total_money_earned = max(GameState.total_money_earned, 1e9)
+	GameState.money += 100000.0
 	GameState._check_milestones()
 	GameState.money_changed.emit(GameState.money)
 

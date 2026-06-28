@@ -26,6 +26,7 @@ const CATEGORY_ORDER := [
 @onready var continue_button: Button = %ContinueButton
 
 var rows: Array = []
+var _helper_rows: Array = []  # [{id, button, info_label}]
 
 func _ready() -> void:
 	visible = false
@@ -36,7 +37,9 @@ func _ready() -> void:
 	GameState.upgrade_purchased.connect(_on_upgrade_purchased)
 	GameState.money_changed.connect(_on_money_changed)
 	GameState.deposited_changed.connect(_on_deposited_changed)
+	GameState.helper_hired.connect(_on_helper_hired)
 	_build_upgrade_rows()
+	_build_helper_rows()
 	_refresh_pile_row()
 
 func _on_day_ended(day: int, dirt_dug: float, money_earned: float) -> void:
@@ -45,6 +48,7 @@ func _on_day_ended(day: int, dirt_dug: float, money_earned: float) -> void:
 	dirt_label.text = "Dug %s dirt" % _fmt(dirt_dug)
 	_refresh_lost_label()
 	_refresh_rows()
+	_refresh_helper_rows()
 	_refresh_pile_row()
 	visible = true
 
@@ -74,6 +78,7 @@ func _on_upgrade_purchased(_id: StringName, _level: int) -> void:
 
 func _on_money_changed(_v: float) -> void:
 	_refresh_rows()
+	_refresh_helper_rows()
 
 func _on_deposited_changed(_v: float) -> void:
 	_refresh_pile_row()
@@ -129,6 +134,72 @@ func _make_header(text: String) -> Label:
 func _refresh_rows() -> void:
 	for r in rows:
 		r.refresh()
+
+# --- Helpers section ------------------------------------------------------
+
+func _build_helper_rows() -> void:
+	for hr in _helper_rows:
+		if is_instance_valid(hr.row):
+			hr.row.queue_free()
+	_helper_rows.clear()
+	if GameState.helpers.is_empty():
+		return
+	# Only build the section if at least one helper is unlockable ever.
+	var header := _make_header("Help")
+	header.name = "HelpersHeader"
+	upgrades_list.add_child(header)
+	_helper_rows.append({"id": &"__header", "row": header, "button": null, "info": null})
+	for h in GameState.helpers:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 12)
+		var info := Label.new()
+		info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		info.add_theme_font_size_override("font_size", 12)
+		var btn := Button.new()
+		btn.focus_mode = Control.FOCUS_NONE
+		btn.custom_minimum_size = Vector2(150, 32)
+		btn.pressed.connect(_on_hire.bind(h.id))
+		row.add_child(info)
+		row.add_child(btn)
+		upgrades_list.add_child(row)
+		_helper_rows.append({"id": h.id, "row": row, "button": btn, "info": info})
+	_refresh_helper_rows()
+
+func _refresh_helper_rows() -> void:
+	for hr in _helper_rows:
+		if hr.id == &"__header":
+			continue
+		var h := GameState.get_helper(hr.id)
+		if h == null:
+			continue
+		var unlocked: bool = GameState.helper_unlocked(hr.id)
+		hr.row.visible = unlocked
+		if not unlocked:
+			continue
+		var lvl: int = GameState.helper_level(hr.id)
+		# Per-day production preview (full day length, full rate while present).
+		var day_len: float = GameState.day_length()
+		var prod_parts: Array = []
+		if h.dirt_per_sec > 0.0:
+			prod_parts.append("%s dirt/day" % _fmt(h.dirt_per_sec * float(lvl) * day_len))
+		if h.ore_id != &"" and h.ore_per_sec > 0.0:
+			var ore_name: String = String(GameState.ore_display_names.get(h.ore_id, str(h.ore_id)))
+			prod_parts.append("%s %s/day" % [_fmt(h.ore_per_sec * float(lvl) * day_len), ore_name])
+		var prod: String = ", ".join(prod_parts) if lvl > 0 else "not yet helping"
+		hr.info.text = "%s (x%d) — %s" % [h.display_name, lvl, prod]
+		if h.is_maxed(lvl):
+			hr.button.text = "Maxed"
+			hr.button.disabled = true
+		else:
+			var verb: String = "Hire" if lvl == 0 else "Add"
+			hr.button.text = "%s  •  $%s" % [verb, _fmt(GameState.helper_cost(hr.id))]
+			hr.button.disabled = not GameState.can_afford_helper(hr.id)
+
+func _on_hire(helper_id: StringName) -> void:
+	GameState.hire_helper(helper_id)
+
+func _on_helper_hired(_id: StringName, _lvl: int) -> void:
+	_refresh_helper_rows()
 
 func _fmt(value: float) -> String:
 	if value < 1000.0:

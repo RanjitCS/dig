@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="Helper" load_steps=2 format=3 uid="uid://dig0helper0dad"]
+
+[ext_resource type="Script" path="res://scripts/helper.gd" id="1_helper"]
+
+[resource]
+script = ExtResource("1_helper")
+id = &"dad_helper"
+display_name = "Dad"
+flavor = "He picked up a second shovel. Didn't say anything. Just started on the next row over."
+dirt_per_sec = 0.5
+ore_id = &""
+ore_per_sec = 0.0
+base_cost = 200.0
+cost_mult = 1.30
+max_level = 0
+unlock_money = 100.0

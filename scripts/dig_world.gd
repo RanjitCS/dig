@@ -27,6 +27,13 @@ var blocks_by_pos: Dictionary = {}  # Vector2i -> DigBlock
 var broken_cells: Dictionary = {}   # Vector2i -> true
 
 signal deepest_changed(row: int)
+# Emitted each frame while digging: how deep the player is and whether the
+# remaining day time is enough to climb back to the surface to deposit.
+# danger 0 = safe, 1 = cutting it close, 2 = you probably won't make it.
+signal return_status(player_depth: int, danger: int)
+
+# Rough seconds it takes the player to climb back up one row of depth.
+const RETURN_SEC_PER_ROW: float = 0.9
 
 func _ready() -> void:
 	rng.randomize()
@@ -38,6 +45,24 @@ func _ready() -> void:
 	GameState.phase_changed.connect(_on_phase_changed)
 	# Defer initial activation by one frame so cameras can resolve cleanly.
 	call_deferred("_initial_phase_check")
+
+func _process(_delta: float) -> void:
+	# Only meaningful while actively digging.
+	if GameState.phase != GameState.Phase.DIGGING or GameState.day_paused:
+		return
+	if player == null:
+		return
+	# Player depth in rows below the surface (0 = at/above surface).
+	var depth: int = max(0, int(floor(player.global_position.y / BLOCK_SIZE.y)) + 1)
+	var danger: int = 0
+	if depth > 0:
+		var needed: float = float(depth) * RETURN_SEC_PER_ROW
+		var left: float = GameState.time_left
+		if left < needed:
+			danger = 2          # probably won't make it back
+		elif left < needed * 1.5:
+			danger = 1          # cutting it close
+	return_status.emit(depth, danger)
 
 func _initial_phase_check() -> void:
 	_on_phase_changed(GameState.phase)

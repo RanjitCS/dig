@@ -16,6 +16,8 @@ extends Control
 var deepest_dug: int = 0
 var _last_pile: float = 0.0
 var _toast_queue: Array[String] = []
+var _last_danger: int = 0
+var _live_depth: int = 0
 
 func _ready() -> void:
 	reset_button.pressed.connect(_on_reset_pressed)
@@ -32,6 +34,7 @@ func _ready() -> void:
 	GameState.carried_changed.connect(_on_carried_changed)
 	GameState.phase_changed.connect(_on_phase_changed)
 	dig_world.deepest_changed.connect(_on_deepest_changed)
+	dig_world.return_status.connect(_on_return_status)
 	toast_timer.timeout.connect(_hide_toast)
 	toast_label.visible = false
 	_last_pile = GameState.deposited_dirt
@@ -102,6 +105,24 @@ func _on_deepest_changed(row: int) -> void:
 		deepest_dug = row
 		_refresh_depth()
 
+# Live player depth + whether they can climb back before the day ends.
+# danger: 0 safe, 1 cutting it close, 2 probably won't make it.
+func _on_return_status(player_depth: int, danger: int) -> void:
+	_live_depth = player_depth
+	_refresh_depth()
+	# Tint the timer by danger.
+	match danger:
+		2:
+			time_left_label.modulate = Color(1.0, 0.4, 0.35)   # red
+		1:
+			time_left_label.modulate = Color(1.0, 0.8, 0.35)   # amber
+		_:
+			time_left_label.modulate = Color(1, 1, 1)
+	# Toast once when first entering the "won't make it" zone (and you have a pack worth losing).
+	if danger == 2 and _last_danger < 2 and GameState.carried_total() > 0.0:
+		_show_toast("Getting late.\nYou're deep — head back to deposit before the day ends.")
+	_last_danger = danger
+
 func _on_day_tick(left: float, length: float) -> void:
 	if time_bar.max_value != length:
 		time_bar.max_value = length
@@ -119,6 +140,11 @@ func _on_phase_changed(p: int) -> void:
 	time_bar.visible = digging
 	time_left_label.visible = digging
 	depth_label.visible = digging
+	if not digging:
+		# Reset depth/danger feedback so it doesn't linger into the house/end-of-day.
+		_live_depth = 0
+		_last_danger = 0
+		time_left_label.modulate = Color(1, 1, 1)
 
 func _refresh_all() -> void:
 	_refresh_dirt()
@@ -151,7 +177,9 @@ func _refresh_money() -> void:
 	money_label.text = "$%s" % _fmt(GameState.money)
 
 func _refresh_depth() -> void:
-	depth_label.text = "Depth: %d" % deepest_dug
+	# Show the player's live depth while digging; fall back to deepest reached.
+	var shown: int = _live_depth if _live_depth > 0 else deepest_dug
+	depth_label.text = "Depth: %d" % shown
 
 func _refresh_day_bar_max() -> void:
 	var length := GameState.day_length()

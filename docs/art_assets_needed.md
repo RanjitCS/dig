@@ -1,8 +1,38 @@
 # Art Assets Needed — Full Survey
 
-Complete list of every visual asset the game needs, mapped to free CC0/CC-BY sources you can study or use as placeholders while you make your own. Pulled from the actual game contents (blocks, helpers, rooms, characters).
+Complete list of every visual asset the game needs.
 
-**Target resolution:** 32×32 for blocks, 32×48 for characters (per `art_plan.md`). Many free packs are 16×16 or 18×18 — fine for study; scale or redraw at our size.
+## ART DIRECTION DECISION (locked 2026-06-28)
+
+**Primary art source: Kenney "Tiny Town" + "Tiny Dungeon" (16×16, CC0).**
+- All **CC0** → no attribution required, can recolor/modify/ship freely.
+- **16×16 native, scaled 3× to fill the 48px block cells** (16 × 3 = 48, clean integer = crisp pixels). No change to the block grid.
+- Tiny Town covers houses / buildings / furniture; Tiny Dungeon covers tiles / characters / items. One consistent style across the whole game.
+- Recolor toward the game's mood as desired, but Kenney's own palette is fine to start. (The Apollo palette / hand-drawn-from-scratch plan is now secondary — kept for any custom pieces the user still wants to draw, e.g. the protagonist or story-specific props.)
+
+Downloads (CC0):
+- Tiny Town: https://kenney.nl/assets/tiny-town
+- Tiny Dungeon: https://kenney.nl/assets/tiny-dungeon
+- (ore detail, if Tiny packs lack ores) CC0 Mineral Icons (32×32): https://opengameart.org/content/cc0-mineral-icons — would need downscaling to 16px to match.
+
+**Old target (superseded):** 32×32 blocks / Apollo palette / jlango CC-BY tileset. Kept below for reference only; the user's hand-drawn dirt-000N experiments live in `resources/blocks/` and can still be swapped in later.
+
+### CC0 source shortlist (searched 2026-06-28)
+
+All CC0 = free, no attribution, recolor/modify/ship freely.
+
+| Source | Res | Covers | Page |
+|---|---|---|---|
+| **Kenney Tiny Town** | 16 | houses, furniture, town | kenney.nl/assets/tiny-town |
+| **Kenney Tiny Dungeon** | 16 | tiles, characters, items | kenney.nl/assets/tiny-dungeon |
+| **Dungeon Crawl 32×32 (DCSS)** | 32 | huge: ores, gems, walls, items, monsters | opengameart.org/content/dungeon-crawl-32x32-tiles |
+| **CC0 Mineral Icons (AntumDeluge)** | 32 | coal, gold, silver, mithril, ore/rock | opengameart.org/content/cc0-mineral-icons |
+| **Generic Platformer Tiles (surt)** | ? | platformer ground/terrain | opengameart.org/content/generic-platformer-tiles |
+| **Simple Broad-Purpose Tileset (surt/Sharm)** | 16 | platformer scenery, chars (Arne palette) | opengameart.org/content/simple-broad-purpose-tileset |
+
+Skip: "A Blocky Dungeon" (top-down, wrong perspective). CC-BY (needs credit, avoid for now): 700+ RPG Icons (Lorc), jlango dirt-grass-rock.
+
+**Plan:** Kenney Tiny packs = dirt/stone/house/characters (the bulk, all 16px). For the 3 ore blocks (coal/iron/gem) which Kenney lacks: take a Kenney stone tile and dab ore specks on it (stays 16px, consistent), OR downscale AntumDeluge Mineral Icons / DCSS ore art to 16px. **Avoid mixing 16px and 32px in the dig grid** — keep one resolution.
 
 ---
 

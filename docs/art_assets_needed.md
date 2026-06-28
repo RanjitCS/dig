@@ -144,3 +144,14 @@ UI can lag behind world art — flat colored panels read fine for a long time.
 - Player/NPCs: assign to the `Sprite2D` slot (already on the node), or for animation swap to `AnimatedSprite2D` (Claude will wire this).
 - Rooms: currently ColorRects — Claude will convert to `Sprite2D`/`TextureRect` when art lands.
 - **Set Project Settings → Rendering → Textures → Default Texture Filter = Nearest** (once, globally) so pixel art stays crisp.
+
+---
+
+## Attribution tracking (required for CC-BY assets — fill in as used)
+
+If any of these end up in the shipped game, the credits screen must list them:
+
+- **jlango — "Dirt - Grass - Rock: Platformer terrain 32x32"** (CC-BY 3.0). Required: a credit line, e.g. "Terrain tiles by jlango (OpenGameArt, CC-BY 3.0)". Status: [ ] used / [ ] not used.
+- CC0 assets (Kenney packs, AntumDeluge CC0 Mineral Icons) need **no** attribution, but crediting is polite.
+
+**Workflow note (decided 2026-06-28):** Block art approach is **CC0/CC-BY base tilesets recolored to the Apollo palette + lightly modified**, not fully hand-drawn from scratch. The user keeps practicing their own pixel art on the side (the dirt-000N series) and can swap hand-made tiles in later. Characters (protagonist, family) more likely to be hand-drawn since personal style matters most there.

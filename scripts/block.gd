@@ -33,6 +33,11 @@ func _ready() -> void:
 func _apply_visuals() -> void:
 	if _chosen_texture != null:
 		sprite.texture = _chosen_texture
+		sprite.centered = true
+		# Scale the texture to exactly fill the block cell, whatever its native size.
+		var tex_size: Vector2 = _chosen_texture.get_size()
+		if tex_size.x > 0.0 and tex_size.y > 0.0:
+			sprite.scale = Vector2(SIZE.x / tex_size.x, SIZE.y / tex_size.y)
 		sprite.visible = true
 		fallback_rect.visible = false
 	else:
@@ -62,8 +67,13 @@ func hit_once() -> void:
 	hit_n(1)
 
 func _update_crack() -> void:
-	if block_type == null or block_type.indestructible or block_type.hits_to_break <= 1:
+	# Only show the HP number once a block has actually been hit — keeps the
+	# undug field clean. Full-HP blocks show nothing.
+	if block_type == null or block_type.indestructible:
 		crack_label.text = ""
+		return
+	if hits_remaining >= block_type.hits_to_break:
+		crack_label.text = ""  # untouched
 		return
 	crack_label.text = "%d" % hits_remaining
 

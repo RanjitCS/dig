@@ -145,7 +145,7 @@ func _build_helper_rows() -> void:
 	if GameState.helpers.is_empty():
 		return
 	# Only build the section if at least one helper is unlockable ever.
-	var header := _make_header("Help")
+	var header := _make_header("Workers (Arya's company)")
 	header.name = "HelpersHeader"
 	upgrades_list.add_child(header)
 	_helper_rows.append({"id": &"__header", "row": header, "button": null, "info": null})

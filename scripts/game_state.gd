@@ -39,6 +39,11 @@ var helpers: Array[Helper] = []
 var helper_levels: Dictionary = {}  # StringName helper_id -> int (count hired)
 var _helper_ore_accum: Dictionary = {}  # StringName ore_id -> float (fractional carryover)
 
+# Region progression. Helpers (Arya's labor company) unlock only once the
+# village has grown into a city. Until the full region system exists this is a
+# simple flag, toggled by reaching City (or by the debug panel).
+var city_unlocked: bool = false
+
 var equipped_id: StringName = &"spade"
 
 var current_day: int = 1
@@ -352,6 +357,7 @@ func reset_game() -> void:
 	triggered_cutscenes.clear()
 	helper_levels.clear()
 	_helper_ore_accum.clear()
+	city_unlocked = false
 	current_day = 1
 	day_dirt_dug = 0.0
 	day_money_earned = 0.0
@@ -451,6 +457,7 @@ func save_game() -> void:
 	for k in helper_levels.keys():
 		helpers_plain[String(k)] = helper_levels[k]
 	var data := {
+		"city_unlocked": city_unlocked,
 		"version": SAVE_VERSION,
 		"saved_at": _last_saved_unix,
 		"dirt": dirt,
@@ -519,6 +526,7 @@ func load_game() -> void:
 	var hl_plain: Dictionary = data.get("helper_levels", {})
 	for k in hl_plain.keys():
 		helper_levels[StringName(k)] = int(hl_plain[k])
+	city_unlocked = bool(data.get("city_unlocked", false))
 	_last_saved_unix = int(data.get("saved_at", 0))
 	var saved_equipped := String(data.get("equipped_id", "spade"))
 	equipped_id = StringName(saved_equipped)
@@ -534,11 +542,7 @@ func load_game() -> void:
 	money_changed.emit(money)
 	equipped_changed.emit(equipped_id)
 	_apply_offline_progress()
-	# Capped offline helper production since last save.
-	if _last_saved_unix > 0:
-		var elapsed: float = float(int(Time.get_unix_time_from_system()) - _last_saved_unix)
-		if elapsed > 0.0:
-			_apply_helper_offline(elapsed)
+	# (Helper offline accrual removed 2026-06-28 — helpers only produce during the active dig day.)
 
 func _apply_offline_progress() -> void:
 	if _last_saved_unix <= 0:
@@ -727,6 +731,9 @@ func helper_cost(helper_id: StringName) -> float:
 	return h.cost_at(helper_level(helper_id))
 
 func helper_unlocked(helper_id: StringName) -> bool:
+	# Helpers only exist once the city has grown (Arya's labor company).
+	if not city_unlocked:
+		return false
 	var h := get_helper(helper_id)
 	if h == null:
 		return false
@@ -783,24 +790,6 @@ func _deposit_dirt_directly(amount: float) -> void:
 	deposited_dirt += amount
 	total_dirt_dug += amount
 	deposited_changed.emit(deposited_dirt)
-
-# Apply capped offline helper production. Called on load with elapsed seconds.
-func _apply_helper_offline(elapsed_sec: float) -> void:
-	if not has_any_helpers():
-		return
-	# Cap at one in-game day of real seconds, at a reduced (50%) rate.
-	var capped: float = min(elapsed_sec, BASE_DAY_LENGTH_SEC)
-	var rate := 0.5
-	var d := helper_dirt_per_sec() * capped * rate
-	if d > 0.0:
-		_deposit_dirt_directly(d)
-	var ore := helper_ore_per_sec_all()
-	for ore_id in ore.keys():
-		var units: int = int(floor(float(ore[ore_id]) * capped * rate))
-		if units > 0:
-			deposited_ore[ore_id] = int(deposited_ore.get(ore_id, 0)) + units
-	if d > 0.0 or not ore.is_empty():
-		deposited_changed.emit(deposited_dirt)
 
 func _check_cutscenes() -> void:
 	print("[cutscene] check: day=", current_day, " money_earned=", total_money_earned, " loaded=", cutscenes.size())

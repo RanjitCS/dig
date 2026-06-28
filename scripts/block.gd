@@ -9,6 +9,7 @@ signal broken(block: DigBlock)
 var block_type: BlockType
 var hits_remaining: int = 0
 var grid_pos: Vector2i = Vector2i.ZERO
+var _chosen_texture: Texture2D = null  # picked once at setup so it doesn't flicker
 
 @onready var sprite: Sprite2D = $Sprite
 @onready var collider: CollisionShape2D = $StaticBody2D/CollisionShape2D
@@ -20,6 +21,7 @@ func setup(type: BlockType, pos: Vector2i) -> void:
 	block_type = type
 	grid_pos = pos
 	hits_remaining = type.hits_to_break
+	_chosen_texture = type.pick_texture()  # locks one variant for this block
 	if is_node_ready():
 		_apply_visuals()
 
@@ -29,8 +31,8 @@ func _ready() -> void:
 		_apply_visuals()
 
 func _apply_visuals() -> void:
-	if block_type != null and block_type.texture != null:
-		sprite.texture = block_type.texture
+	if _chosen_texture != null:
+		sprite.texture = _chosen_texture
 		sprite.visible = true
 		fallback_rect.visible = false
 	else:

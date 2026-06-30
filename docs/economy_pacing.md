@@ -55,34 +55,35 @@ Goal: ~60-120 in-game days in the backyard before City unlock. Each upgrade shou
 - Spade base cooldown: 0.15 → **0.20s**
 - Day length: stays **30s** base (upgrades extend it)
 
-### Block values (re-gated 2026-06-30 for the village)
+### Block values (depths TRIPLED 2026-06-30 — "we should not hit stone so soon")
 | Block | HP | yield | depth | weight |
 |---|---|---|---|---|
 | topsoil | 4 | 1 dirt | 1 (surface only) | 10 |
 | **loose dirt** (was "dirt") | 8 | **0** (worthless overburden) | 2+ | 10 |
 | **clay** | 9 | **2 dirt** (the sellable earth) | 2+ | 2.5 |
-| stone | 14 | 2 dirt | 5+ | 4 |
-| **hard rock** | 28 | 2 dirt | 5+ | 2.0 |
-| **unstable rock** (hazard) | 10 | 1 dirt | **5+** | **2.5** |
-| coal | 18 | **$1.5** | 8+ | **2.0** |
-| **ore pocket** (reward) | 16 | **$4** | **18+** | 0.3 |
-| iron | 30 | **$5** | **25+** | **0.4** |
-| **gold** (NEW) | 40 | **$12** | **28+** | 0.18 |
-| gem | 50 | **$18** | **32+** | **0.15** |
+| stone | 14 | 2 dirt | **15+** | 4 |
+| **hard rock** | 28 | 2 dirt | **15+** | 2.0 |
+| **unstable rock** (hazard) | 10 | 1 dirt | **15+** | 2.5 |
+| coal | 18 | **$1.5** | **24+** | 2.0 |
+| **ore pocket** (reward) | 16 | **$4** | **54+** | 0.3 |
+| iron | 30 | **$5** | **75+** | 0.4 |
+| **gold** | 40 | **$12** | **84+** | 0.18 |
+| gem | 50 | **$18** | **96+** | 0.15 |
 | dirt price | — | **$0.10/unit** (unchanged) | — | — |
 
-Ore ramp: coal $1.5 → ore pocket $4 → iron $5 → gold $12 → gem $18. Coal is now 15× a dirt unit (was 80×).
+Ore ramp: coal $1.5 → ore pocket $4 → iron $5 → gold $12 → gem $18.
 
-### Village ore-gating (2026-06-30)
-The House/village should expose **dirt, clay, stone, coal** as the everyday materials; precious stuff is **deep + very rare**. Simulated block composition by depth:
-- **d1-3:** topsoil/dirt/clay only — lean opening.
-- **d5-6:** stone, hard rock, **unstable rock (~12%)** — cave-ins start here.
-- **d8-18:** **coal (~9%)** is the reliable money ore. Nothing precious.
-- **d18+:** ore pockets at ~1% (a genuine rich find).
-- **d25:** iron trickles in ~2%.
-- **d28-35:** **gold + gem ~1% each** — the deepest village jackpots, ~1-in-100.
+### Village strata (depths tripled 2026-06-30)
+Early bands were too cramped (stone at depth 5 = hit in seconds). Tripled from stone down; dirt/clay still start at depth 2 (you dig into dirt immediately).
+- **d2-14:** pure dirt-digging — loose dirt + clay only. The long lean opening.
+- **d15+:** stone, hard rock, **unstable rock** — cave-ins start here.
+- **d24+:** **coal** — the reliable money ore.
+- **d54+:** ore pockets ($4, ~1%).
+- **d75+:** iron. **d84+:** gold. **d96+:** gem — the deepest jackpots, very rare.
 
-**Soft floor (no wall):** depth stays technically infinite, but past ~35 there's nothing richer than gem and the climb-back risk grows, so the player naturally stops. Real depth opens with later regions. (Chosen 2026-06-30 over a hard bedrock floor, to preserve the infinite-bottle feel.)
+**Soft floor (no wall):** depth stays infinite; past ~100 there's nothing richer than gem + climb-risk grows → natural stop. Real depth opens with later regions.
+
+⚠️ **Deep-tier reachability:** at the tripled depths, iron/gold/gem sit 75-96 rows down — many days of digging. They may be effectively aspirational/late-House (or even City-era) goals now. Watch in playtest: if coal@24 already feels too deep to reach in early days, the whole table may need to come back up ~1.5× instead of ×3.
 
 ### Dirt-tier split (2026-06-30)
 Not every block pays anymore. **Loose dirt is worthless ($0)** — pure overburden you dig through. The sellable "dirt" resource now comes from **clay** pockets (2 dirt/block, weight 2.5 ≈ ~18% of shallow blocks). This makes even the dirt-only early game a *search*, not a guaranteed payout, and roughly halves early income (sim: shallow day ~$0.73 vs old ~$1.50). Topsoil (surface row only) still gives 1 dirt as a small day-1 bonus. The deposit-pile / $0.10-per-unit plumbing is unchanged — the pile just fills slower (clay + topsoil feed it; everything else gives 0).

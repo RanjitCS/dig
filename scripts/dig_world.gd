@@ -150,11 +150,11 @@ func _load_block_types() -> void:
 const LAYER_MARKERS := [
 	{"depth": 1, "name": "Topsoil"},
 	{"depth": 2, "name": "Soil & Clay"},
-	{"depth": 5, "name": "Stone Layer"},
-	{"depth": 8, "name": "Coal Seam"},
-	{"depth": 25, "name": "Iron Vein"},
-	{"depth": 28, "name": "Deep Rock"},
-	{"depth": 32, "name": "Gem Depths"},
+	{"depth": 15, "name": "Stone Layer"},
+	{"depth": 24, "name": "Coal Seam"},
+	{"depth": 75, "name": "Iron Vein"},
+	{"depth": 84, "name": "Deep Rock"},
+	{"depth": 96, "name": "Gem Depths"},
 ]
 
 func _generate_rows(count: int) -> void:
@@ -452,18 +452,25 @@ func _unstable_at(pos: Vector2i) -> DigBlock:
 
 # Emptying `empty_pos` can set off loose rock around it:
 #  - rock directly ABOVE is now unsupported -> it drops straight down.
-#  - rock to the LEFT/RIGHT, freshly exposed, may crumble and slide into the gap.
+#  - rock to the LEFT/RIGHT may crumble into the gap, but ONLY if doing so lets it
+#    actually fall (the gap column has empty space below). Loose rock does not roll
+#    sideways onto flat ground at the same level — that looked like teleporting.
 func _disturb_unstable_around(empty_pos: Vector2i) -> void:
 	# Above: classic undermining — drop straight down if now unsupported.
 	var above := _unstable_at(empty_pos + Vector2i(0, -1))
 	if above != null:
 		_drop_unstable_block(above, empty_pos + Vector2i(0, -1))
-	# Sides: loose rock slides into the hole we just dug (chance-based).
+	# Sides: only crumble in if the gap column drops the block at least one row.
 	var crumble := _crumble_chance()
 	for dx in [-1, 1]:
 		var side_pos := empty_pos + Vector2i(dx, 0)
 		var side := _unstable_at(side_pos)
-		if side != null and randf() < crumble:
+		if side == null:
+			continue
+		var dest := _rest_cell_below(empty_pos)
+		if dest.y <= side_pos.y:
+			continue                      # sliding over wouldn't make it fall — skip
+		if randf() < crumble:
 			_shift_unstable_into(side, side_pos, empty_pos)
 
 # Today's crumble chance — a special "unstable ground" day can override the base.

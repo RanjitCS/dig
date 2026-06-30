@@ -10,6 +10,6 @@ color = Color(0.1, 0.1, 0.1, 1)
 hits_to_break = 18
 dirt_yield = 0.0
 money_yield = 1.5
-min_depth = 8
+min_depth = 24
 max_depth = 99999
 weight = 2.0

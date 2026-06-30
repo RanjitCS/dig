@@ -14,9 +14,9 @@ const NECK_COL_LO: int = 13       # inclusive
 const NECK_COL_HI: int = 16       # inclusive (4 wide)
 const NECK_ROWS: int = 4          # rows 1..4 stay neck-width
 # Cavern body: the wide chamber below. Left wall (col 4) sits under the house
-# (cols 2..8); right wall col 16. 13 cols wide.
+# (cols 2..8); right wall col 22 reaches under the fenced backyard. 19 cols wide.
 const BODY_COL_LO: int = 4        # inclusive
-const BODY_COL_HI: int = 16       # inclusive (13 wide)
+const BODY_COL_HI: int = 22       # inclusive (19 wide)
 const SHOULDER_ROWS: int = 6      # rows NECK_ROWS+1 .. +SHOULDER_ROWS flare open
 const ROWS_AHEAD: int = 30
 const BLOCK_DIR: String = "res://resources/blocks/"

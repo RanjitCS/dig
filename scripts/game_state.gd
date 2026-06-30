@@ -788,6 +788,14 @@ func today_event_money_mult() -> float:
 func today_event_day_length_mult() -> float:
 	return today_event.day_length_mult if today_event != null else 1.0
 
+# Ore-spawn weight multiplier for money-bearing blocks (rich-vein day). 1.0 normally.
+func today_event_ore_weight_mult() -> float:
+	return today_event.ore_weight_mult if today_event != null else 1.0
+
+# Cave-in crumble-chance override for the day, or <0 when there's no override.
+func today_event_crumble_chance() -> float:
+	return today_event.crumble_chance if today_event != null else -1.0
+
 func get_helper(helper_id: StringName) -> Helper:
 	for h in helpers:
 		if h.id == helper_id:

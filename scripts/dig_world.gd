@@ -278,8 +278,7 @@ func _pick_block_type_for_depth(depth: int) -> BlockType:
 # Today's ore-spawn multiplier — a "rich vein" day makes money-bearing ore more
 # common. 1.0 on ordinary days.
 func _ore_weight_mult() -> float:
-	var ev = GameState.today_event
-	return ev.ore_weight_mult if ev != null else 1.0
+	return GameState.today_event_ore_weight_mult()
 
 # --- Adjacency / reach -----------------------------------------------------
 
@@ -469,9 +468,9 @@ func _disturb_unstable_around(empty_pos: Vector2i) -> void:
 
 # Today's crumble chance — a special "unstable ground" day can override the base.
 func _crumble_chance() -> float:
-	var ev = GameState.today_event
-	if ev != null and ev.crumble_chance >= 0.0:
-		return ev.crumble_chance
+	var override: float = GameState.today_event_crumble_chance()
+	if override >= 0.0:
+		return override
 	return CAVEIN_CRUMBLE_CHANCE
 
 func _drop_unstable_block(block: DigBlock, from: Vector2i) -> void:

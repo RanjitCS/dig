@@ -42,7 +42,9 @@ func _on_cutscene_triggered(scene: Cutscene) -> void:
 
 # Special-day announce reuses the same typewriter modal, with the title tinted by
 # the event's category so good/risky/cozy/tough days read differently at a glance.
-func _on_day_event_started(event: DayEvent) -> void:
+# `event` is a DayEvent (kept untyped to avoid cross-script class-resolution order
+# issues at parse time).
+func _on_day_event_started(event) -> void:
 	print("[cutscene-modal] day event: ", event.id, " title='", event.title, "'")
 	title_label.add_theme_color_override("font_color", event.category_color())
 	_present(event.title, event.description)

@@ -5,8 +5,12 @@ const MILESTONE_DIR: String = "res://resources/milestones/"
 const BLOCK_DIR: String = "res://resources/blocks/"
 const CUTSCENE_DIR: String = "res://resources/cutscenes/"
 const HELPER_DIR: String = "res://resources/helpers/"
+const DAY_EVENT_DIR: String = "res://resources/day_events/"
 const SAVE_PATH: String = "user://save.json"
-const SAVE_VERSION: int = 8
+const SAVE_VERSION: int = 9
+
+# Odds that any given new day (after day 1) is a "special day". Rare on purpose.
+const SPECIAL_DAY_CHANCE: float = 1.0 / 13.0
 const DEFAULT_ROOM: StringName = &"bedroom"
 
 enum Phase { HOUSE_INTERIOR, DIGGING, END_OF_DAY }
@@ -38,6 +42,10 @@ var triggered_cutscenes: Dictionary = {}  # StringName -> bool
 var helpers: Array[Helper] = []
 var helper_levels: Dictionary = {}  # StringName helper_id -> int (count hired)
 var _helper_ore_accum: Dictionary = {}  # StringName ore_id -> float (fractional carryover)
+
+# "Special day" events. Rolled rarely at day-start; applied for the whole day.
+var day_events: Array[DayEvent] = []
+var today_event: DayEvent = null  # the active special day, or null for an ordinary day
 
 # Region progression. Helpers (Arya's labor company) unlock only once the
 # village has grown into a city. Until the full region system exists this is a
@@ -79,12 +87,15 @@ signal day_tick(time_left: float, day_length: float)
 signal day_ended(day: int, dirt_dug: float, money_earned: float)
 signal day_started(day: int)
 signal helper_hired(helper_id: StringName, new_level: int)
+# Fired when a new day rolls a special event. The announce modal listens.
+signal day_event_started(event: DayEvent)
 
 func _ready() -> void:
 	_load_upgrades()
 	_load_milestones()
 	_load_cutscenes()
 	_load_helpers()
+	_load_day_events()
 	_load_ore_prices()
 	load_game()
 	time_left = day_length()
@@ -181,7 +192,8 @@ func start_digging() -> void:
 	set_phase(Phase.DIGGING)
 
 func day_length() -> float:
-	return BASE_DAY_LENGTH_SEC + _sum_effect(Upgrade.Effect.DAY_LENGTH_SEC)
+	var base := BASE_DAY_LENGTH_SEC + _sum_effect(Upgrade.Effect.DAY_LENGTH_SEC)
+	return base * today_event_day_length_mult()
 
 func backpack_capacity() -> float:
 	return BASE_BACKPACK_CAPACITY + _sum_effect(Upgrade.Effect.BACKPACK_CAPACITY)
@@ -237,7 +249,7 @@ func sell_deposited_pile() -> float:
 	# Convert deposit pile (dirt + ore) to money. End-of-day moment.
 	if deposited_dirt <= 0.0 and deposited_ore.is_empty():
 		return 0.0
-	var money_mult := 1.0 + _sum_effect(Upgrade.Effect.CLICK_MONEY_MULT)
+	var money_mult := (1.0 + _sum_effect(Upgrade.Effect.CLICK_MONEY_MULT)) * today_event_money_mult()
 	var earned: float = deposited_dirt * DIRT_PRICE_PER_UNIT * money_mult
 	for k in deposited_ore.keys():
 		var count: int = int(deposited_ore[k])
@@ -251,7 +263,7 @@ func sell_deposited_pile() -> float:
 
 func deposited_pile_value() -> float:
 	# Preview the total $ the pile would sell for right now (with mult applied).
-	var money_mult := 1.0 + _sum_effect(Upgrade.Effect.CLICK_MONEY_MULT)
+	var money_mult := (1.0 + _sum_effect(Upgrade.Effect.CLICK_MONEY_MULT)) * today_event_money_mult()
 	var total: float = deposited_dirt * DIRT_PRICE_PER_UNIT * money_mult
 	for k in deposited_ore.keys():
 		total += float(deposited_ore[k]) * float(ore_prices.get(k, 0.0)) * money_mult
@@ -297,6 +309,9 @@ func start_next_day() -> void:
 	day_money_earned = 0.0
 	last_day_lost_dirt = 0.0
 	last_day_lost_ore_count = 0
+	# Roll the special-day event BEFORE computing day length (storm/still-air
+	# scale it) so time_left reflects today's modifier.
+	_roll_day_event()
 	time_left = day_length()
 	day_paused = false
 	# Day begins in the bedroom; player must walk out the door to begin digging.
@@ -304,7 +319,11 @@ func start_next_day() -> void:
 	set_room(DEFAULT_ROOM, NAN)
 	day_started.emit(current_day)
 	day_tick.emit(time_left, day_length())
-	_check_cutscenes()
+	# A scripted cutscene takes priority over the special-day announce on the rare
+	# day both would fire (the modal shows one at a time).
+	var fired_cutscene := _check_cutscenes()
+	if not fired_cutscene and today_event != null:
+		day_event_started.emit(today_event)
 
 func skip_to_end_of_day() -> void:
 	# Called when player presses E on the bed before going out.
@@ -357,6 +376,7 @@ func reset_game() -> void:
 	triggered_cutscenes.clear()
 	helper_levels.clear()
 	_helper_ore_accum.clear()
+	today_event = null
 	city_unlocked = false
 	current_day = 1
 	day_dirt_dug = 0.0
@@ -478,6 +498,7 @@ func save_game() -> void:
 		"time_left": time_left,
 		"day_dirt_dug": day_dirt_dug,
 		"day_money_earned": day_money_earned,
+		"today_event_id": String(today_event.id) if today_event != null else "",
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f == null:
@@ -533,6 +554,8 @@ func load_game() -> void:
 	phase = data.get("phase", Phase.HOUSE_INTERIOR) as Phase
 	current_room = StringName(String(data.get("current_room", String(DEFAULT_ROOM))))
 	current_day = int(data.get("current_day", 1))
+	var saved_event_id := String(data.get("today_event_id", ""))
+	today_event = get_day_event(StringName(saved_event_id)) if saved_event_id != "" else null
 	time_left = float(data.get("time_left", day_length()))
 	day_dirt_dug = float(data.get("day_dirt_dug", 0.0))
 	day_money_earned = float(data.get("day_money_earned", 0.0))
@@ -713,6 +736,58 @@ func _load_helpers() -> void:
 		return a.unlock_money < b.unlock_money
 	)
 
+func _load_day_events() -> void:
+	day_events.clear()
+	var dir := DirAccess.open(DAY_EVENT_DIR)
+	if dir == null:
+		return
+	dir.list_dir_begin()
+	var file := dir.get_next()
+	while file != "":
+		if file.ends_with(".tres") or file.ends_with(".res"):
+			var res := load(DAY_EVENT_DIR + file)
+			if res is DayEvent:
+				day_events.append(res)
+		file = dir.get_next()
+	dir.list_dir_end()
+
+func get_day_event(event_id: StringName) -> DayEvent:
+	for e in day_events:
+		if e.id == event_id:
+			return e
+	return null
+
+# Roll for a special day. Sets today_event (or null) and announces it. Called from
+# start_next_day(). Never fires on day 1 (that day is scripted).
+func _roll_day_event() -> void:
+	today_event = null
+	if current_day <= 1 or day_events.is_empty():
+		return
+	if randf() >= SPECIAL_DAY_CHANCE:
+		return
+	today_event = _pick_weighted_event()
+
+func _pick_weighted_event() -> DayEvent:
+	var total := 0.0
+	for e in day_events:
+		total += e.weight
+	if total <= 0.0:
+		return null
+	var roll := randf() * total
+	var accum := 0.0
+	for e in day_events:
+		accum += e.weight
+		if roll <= accum:
+			return e
+	return day_events[day_events.size() - 1]
+
+# Day-event multipliers (neutral 1.0 when there's no special day).
+func today_event_money_mult() -> float:
+	return today_event.money_mult if today_event != null else 1.0
+
+func today_event_day_length_mult() -> float:
+	return today_event.day_length_mult if today_event != null else 1.0
+
 func get_helper(helper_id: StringName) -> Helper:
 	for h in helpers:
 		if h.id == helper_id:
@@ -791,7 +866,7 @@ func _deposit_dirt_directly(amount: float) -> void:
 	total_dirt_dug += amount
 	deposited_changed.emit(deposited_dirt)
 
-func _check_cutscenes() -> void:
+func _check_cutscenes() -> bool:
 	print("[cutscene] check: day=", current_day, " money_earned=", total_money_earned, " loaded=", cutscenes.size())
 	for c in cutscenes:
 		var already: bool = triggered_cutscenes.get(c.id, false)
@@ -812,4 +887,5 @@ func _check_cutscenes() -> void:
 			if c.run_once:
 				triggered_cutscenes[c.id] = true
 			cutscene_triggered.emit(c)
-			return
+			return true
+	return false

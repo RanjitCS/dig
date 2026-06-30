@@ -55,31 +55,46 @@ Goal: ~60-120 in-game days in the backyard before City unlock. Each upgrade shou
 - Spade base cooldown: 0.15 → **0.20s**
 - Day length: stays **30s** base (upgrades extend it)
 
-### Block values
+### Block values (re-gated 2026-06-30 for the village)
 | Block | HP | yield | depth | weight |
 |---|---|---|---|---|
 | topsoil | 4 | 1 dirt | 1 (surface only) | 10 |
 | **loose dirt** (was "dirt") | 8 | **0** (worthless overburden) | 2+ | 10 |
-| **clay** (NEW) | 9 | **2 dirt** (the sellable earth) | 2+ | 2.5 |
+| **clay** | 9 | **2 dirt** (the sellable earth) | 2+ | 2.5 |
 | stone | 14 | 2 dirt | 5+ | 4 |
-| **hard rock** (NEW) | 28 | 2 dirt | 5+ | 2.0 |
-| **unstable rock** (NEW, hazard) | 10 | 1 dirt | 6+ | 1.5 |
-| coal | 18 | **$1.5** | 8+ | 1.5 |
-| **ore pocket** (NEW, reward) | 16 | **$4** | 8+ | 0.3 |
-| iron | 30 | **$5** | 20+ | 0.8 |
-| gem | 50 | **$18** | 40+ | 0.2 |
+| **hard rock** | 28 | 2 dirt | 5+ | 2.0 |
+| **unstable rock** (hazard) | 10 | 1 dirt | **5+** | **2.5** |
+| coal | 18 | **$1.5** | 8+ | **2.0** |
+| **ore pocket** (reward) | 16 | **$4** | **18+** | 0.3 |
+| iron | 30 | **$5** | **25+** | **0.4** |
+| **gold** (NEW) | 40 | **$12** | **28+** | 0.18 |
+| gem | 50 | **$18** | **32+** | **0.15** |
 | dirt price | — | **$0.10/unit** (unchanged) | — | — |
 
-Ore ramp: coal $1.5 → ore pocket $4 → iron $5 → gem $18. Coal is now 15× a dirt unit (was 80×).
+Ore ramp: coal $1.5 → ore pocket $4 → iron $5 → gold $12 → gem $18. Coal is now 15× a dirt unit (was 80×).
+
+### Village ore-gating (2026-06-30)
+The House/village should expose **dirt, clay, stone, coal** as the everyday materials; precious stuff is **deep + very rare**. Simulated block composition by depth:
+- **d1-3:** topsoil/dirt/clay only — lean opening.
+- **d5-6:** stone, hard rock, **unstable rock (~12%)** — cave-ins start here.
+- **d8-18:** **coal (~9%)** is the reliable money ore. Nothing precious.
+- **d18+:** ore pockets at ~1% (a genuine rich find).
+- **d25:** iron trickles in ~2%.
+- **d28-35:** **gold + gem ~1% each** — the deepest village jackpots, ~1-in-100.
+
+**Soft floor (no wall):** depth stays technically infinite, but past ~35 there's nothing richer than gem and the climb-back risk grows, so the player naturally stops. Real depth opens with later regions. (Chosen 2026-06-30 over a hard bedrock floor, to preserve the infinite-bottle feel.)
 
 ### Dirt-tier split (2026-06-30)
 Not every block pays anymore. **Loose dirt is worthless ($0)** — pure overburden you dig through. The sellable "dirt" resource now comes from **clay** pockets (2 dirt/block, weight 2.5 ≈ ~18% of shallow blocks). This makes even the dirt-only early game a *search*, not a guaranteed payout, and roughly halves early income (sim: shallow day ~$0.73 vs old ~$1.50). Topsoil (surface row only) still gives 1 dirt as a small day-1 bonus. The deposit-pile / $0.10-per-unit plumbing is unchanged — the pile just fills slower (clay + topsoil feed it; everything else gives 0).
 
-### Projected House pace
-- dirt-only day ≈ **$1.50**; all-coal day ≈ **$9**
-- first Coffee ($8) ≈ day 5; first Backpack ($15) ≈ day 10
-- cumulative: day 10 ≈ $19, day 30 ≈ $87, day 60 ≈ $370, day 100 ≈ $1900
-- **City unlock cost ≈ $2000** → House region ≈ **~100 days ≈ 1.5-2.5h**. On target.
+### Projected House pace (REVISED 2026-06-30 after ore re-gating)
+The dirt split + pushing ore deep made the village ~3-4× leaner than the original v3 projection. Re-simulated cumulative income (crude straight-down model w/ tool+depth+backpack progression):
+- day 10 ≈ $2, day 30 ≈ $25, day 60 ≈ $122, day 100 ≈ $488, day 150 ≈ $1024
+- **City unlock target revised $2000 → ~$1100** so House finishes ~110-130 days ≈ **~2-2.5h**. Keeps the lean "every dollar counts" feel the user wants.
+- ⚠️ Sim is crude (assumes straight-down digging). Treat as directional; **real tuning waits on in-engine playtest.**
+- ⚠️ **No region-unlock flow exists yet** — `city_unlocked` is a debug flag. The $1100 is a locked *design target* for when that gate is built, not a wired cost.
+
+(Original v3 projection, now superseded: dirt-only day ≈ $1.50, City ≈ $2000 at ~100 days.)
 
 ### Upgrade cost curves (base, mult per level)
 - Coffee (day length): base **$8**, ×**1.5**

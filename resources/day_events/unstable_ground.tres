@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DayEvent" load_steps=2 format=3 uid="uid://dig0event0unstableground"]
+
+[ext_resource type="Script" path="res://scripts/day_event.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"unstable_ground"
+title = "Loose Ground"
+description = "Something shifted in the night. The walls don't feel like they want to hold. The deep stuff is close, if you're willing."
+category = 1
+weight = 0.9
+money_mult = 1.0
+ore_weight_mult = 1.4
+crumble_chance = 0.85
+day_length_mult = 1.0
+no_dig = false

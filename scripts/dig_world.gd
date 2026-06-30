@@ -152,8 +152,9 @@ const LAYER_MARKERS := [
 	{"depth": 2, "name": "Soil & Clay"},
 	{"depth": 5, "name": "Stone Layer"},
 	{"depth": 8, "name": "Coal Seam"},
-	{"depth": 20, "name": "Iron Vein"},
-	{"depth": 40, "name": "Gem Depths"},
+	{"depth": 25, "name": "Iron Vein"},
+	{"depth": 28, "name": "Deep Rock"},
+	{"depth": 32, "name": "Gem Depths"},
 ]
 
 func _generate_rows(count: int) -> void:
@@ -252,21 +253,33 @@ func _maybe_place_layer_marker(row: int) -> void:
 # Player digs their own entry now; no pre-broken gap.
 
 func _pick_block_type_for_depth(depth: int) -> BlockType:
+	var ore_mult := _ore_weight_mult()
 	var candidates: Array = []
+	var weights: Array = []
 	var total_weight := 0.0
 	for t in block_types:
 		if depth >= t.min_depth and depth <= t.max_depth:
+			var w: float = t.weight
+			if ore_mult != 1.0 and t.money_yield > 0.0:
+				w *= ore_mult         # rich-vein day: money-ore spawns more often
 			candidates.append(t)
-			total_weight += t.weight
+			weights.append(w)
+			total_weight += w
 	if candidates.is_empty() or total_weight <= 0.0:
 		return null
 	var roll := rng.randf() * total_weight
 	var accum := 0.0
-	for t in candidates:
-		accum += t.weight
+	for i in candidates.size():
+		accum += weights[i]
 		if roll <= accum:
-			return t
+			return candidates[i]
 	return candidates[candidates.size() - 1]
+
+# Today's ore-spawn multiplier — a "rich vein" day makes money-bearing ore more
+# common. 1.0 on ordinary days.
+func _ore_weight_mult() -> float:
+	var ev = GameState.today_event
+	return ev.ore_weight_mult if ev != null else 1.0
 
 # --- Adjacency / reach -----------------------------------------------------
 
@@ -392,8 +405,9 @@ func _remove_block(block: DigBlock, award_yields: bool) -> void:
 		_award_yields_for(block.block_type)
 	_maybe_extend_world(pos.y)
 	block.queue_free()
-	# A freshly-emptied cell may leave loose rock above it unsupported.
-	_settle_unstable_above(pos)
+	# Emptying a cell can set off loose rock around it: rock directly above is now
+	# unsupported, and loose rock to either side can crumble and slide into the gap.
+	_disturb_unstable_around(pos)
 
 func _on_block_broken(block: DigBlock) -> void:
 	print("block broken: pos=%s type=%s" % [str(block.grid_pos), str(block.block_type.id)])
@@ -412,6 +426,10 @@ var _falling: Dictionary = {}
 # Rough seconds per cell of fall + the telegraph beat before a block lets go.
 const CAVEIN_TELEGRAPH_SEC: float = 0.18
 const CAVEIN_FALL_SEC_PER_CELL: float = 0.07
+# Chance that loose rock exposed from the SIDE (still resting on solid ground)
+# crumbles and slides into the gap you dug, instead of needing its floor removed.
+# This is what makes cave-ins something you actually see while digging.
+const CAVEIN_CRUMBLE_CHANCE: float = 0.5
 
 # Is this cell solid enough to stop a falling block / count as support?
 # Bedrock, normal blocks, the world edges, and the generated floor all count.
@@ -425,51 +443,92 @@ func _cell_blocks_fall(pos: Vector2i) -> bool:
 	var b: DigBlock = blocks_by_pos.get(pos, null)
 	return b != null
 
-func _settle_unstable_above(empty_pos: Vector2i) -> void:
-	var above := empty_pos + Vector2i(0, -1)
-	var b: DigBlock = blocks_by_pos.get(above, null)
-	if b == null or b.block_type == null:
-		return
-	if not b.block_type.unstable:
-		return
-	if _falling.has(above):
-		return
-	_drop_unstable_block(b, above)
+func _unstable_at(pos: Vector2i) -> DigBlock:
+	var b: DigBlock = blocks_by_pos.get(pos, null)
+	if b == null or b.block_type == null or not b.block_type.unstable:
+		return null
+	if _falling.has(pos):
+		return null
+	return b
+
+# Emptying `empty_pos` can set off loose rock around it:
+#  - rock directly ABOVE is now unsupported -> it drops straight down.
+#  - rock to the LEFT/RIGHT, freshly exposed, may crumble and slide into the gap.
+func _disturb_unstable_around(empty_pos: Vector2i) -> void:
+	# Above: classic undermining — drop straight down if now unsupported.
+	var above := _unstable_at(empty_pos + Vector2i(0, -1))
+	if above != null:
+		_drop_unstable_block(above, empty_pos + Vector2i(0, -1))
+	# Sides: loose rock slides into the hole we just dug (chance-based).
+	var crumble := _crumble_chance()
+	for dx in [-1, 1]:
+		var side_pos := empty_pos + Vector2i(dx, 0)
+		var side := _unstable_at(side_pos)
+		if side != null and randf() < crumble:
+			_shift_unstable_into(side, side_pos, empty_pos)
+
+# Today's crumble chance — a special "unstable ground" day can override the base.
+func _crumble_chance() -> float:
+	var ev = GameState.today_event
+	if ev != null and ev.crumble_chance >= 0.0:
+		return ev.crumble_chance
+	return CAVEIN_CRUMBLE_CHANCE
 
 func _drop_unstable_block(block: DigBlock, from: Vector2i) -> void:
 	# Find the landing cell: walk down from `from` until the next cell is solid.
-	var dest := from
-	while not _cell_blocks_fall(dest + Vector2i(0, 1)):
-		dest += Vector2i(0, 1)
+	var dest := _rest_cell_below(from)
 	if dest == from:
 		return                            # already supported; nothing to do
-	# Re-key the grid immediately so reach/dig logic sees the new layout even
-	# while the slide animation plays.
+	_move_block_to(block, from, dest)
+	_animate_fall(block, from, dest, true)
+
+# Loose rock crumbles sideways into a freshly-dug gap, then keeps falling down
+# that column until it rests. `gap` is the just-emptied cell beside it.
+func _shift_unstable_into(block: DigBlock, from: Vector2i, gap: Vector2i) -> void:
+	var dest := _rest_cell_below(gap)   # slide into the gap column, settle down
+	_move_block_to(block, from, dest)
+	_animate_fall(block, from, dest, true)
+
+# Lowest empty cell at/below `start` (stops above the first solid cell).
+func _rest_cell_below(start: Vector2i) -> Vector2i:
+	var dest := start
+	while not _cell_blocks_fall(dest + Vector2i(0, 1)):
+		dest += Vector2i(0, 1)
+	return dest
+
+# Re-key the grid immediately so reach/dig logic sees the new layout even while
+# the slide animation is still playing.
+func _move_block_to(block: DigBlock, from: Vector2i, dest: Vector2i) -> void:
 	_falling[from] = true
 	blocks_by_pos.erase(from)
 	broken_cells[from] = true             # the vacated cell is now open
 	block.grid_pos = dest
 	blocks_by_pos[dest] = block
 	broken_cells.erase(dest)              # the landing cell is filled again
-	_animate_fall(block, from, dest)
 
-func _animate_fall(block: DigBlock, from: Vector2i, dest: Vector2i) -> void:
-	var target_y := float(dest.y - 1) * BLOCK_SIZE.y + BLOCK_SIZE.y * 0.5
-	var cells := dest.y - from.y
+func _animate_fall(block: DigBlock, from: Vector2i, dest: Vector2i, telegraph: bool) -> void:
+	var target := Vector2(
+		float(dest.x) * BLOCK_SIZE.x + BLOCK_SIZE.x * 0.5,
+		float(dest.y - 1) * BLOCK_SIZE.y + BLOCK_SIZE.y * 0.5
+	)
+	var cells: int = max(1, dest.y - from.y)
 	var tw := create_tween()
-	# Telegraph: a small shudder in place before it lets go.
-	tw.tween_property(block, "position:x", block.position.x - 2.0, CAVEIN_TELEGRAPH_SEC * 0.5)
-	tw.tween_property(block, "position:x", block.position.x + 2.0, CAVEIN_TELEGRAPH_SEC * 0.5)
-	tw.tween_property(block, "position:x", block.position.x, 0.02)
-	# Then the drop, easing in like a real fall.
-	tw.tween_property(block, "position:y", target_y, CAVEIN_FALL_SEC_PER_CELL * float(cells)) \
+	if telegraph:
+		# A small shudder in place before it lets go.
+		var x0 := block.position.x
+		tw.tween_property(block, "position:x", x0 - 2.0, CAVEIN_TELEGRAPH_SEC * 0.5)
+		tw.tween_property(block, "position:x", x0 + 2.0, CAVEIN_TELEGRAPH_SEC * 0.5)
+		tw.tween_property(block, "position:x", x0, 0.02)
+	# Slide horizontally into the column (if it crumbled sideways) and drop.
+	tw.set_parallel(false)
+	tw.tween_property(block, "position", target, CAVEIN_FALL_SEC_PER_CELL * float(cells)) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw.tween_callback(_on_fall_landed.bind(from, dest))
 
 func _on_fall_landed(from: Vector2i, dest: Vector2i) -> void:
 	_falling.erase(from)
-	# The cell the block left is now empty — loose rock above it may drop too.
-	_settle_unstable_above(from)
+	# The cell the block left is now empty — loose rock around it may move too.
+	_disturb_unstable_around(from)
 
 func _award_yields_for(type: BlockType) -> void:
 	var crit_chance := GameState._sum_effect(Upgrade.Effect.CRIT_CHANCE)

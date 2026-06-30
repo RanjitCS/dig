@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DayEvent" load_steps=2 format=3 uid="uid://dig0event0richvein"]
+
+[ext_resource type="Script" path="res://scripts/day_event.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"rich_vein"
+title = "Good Ground"
+description = "The dirt smells like metal today. Whatever's down there, there's more of it than usual."
+category = 0
+weight = 1.0
+money_mult = 1.0
+ore_weight_mult = 2.5
+crumble_chance = -1.0
+day_length_mult = 1.0
+no_dig = false

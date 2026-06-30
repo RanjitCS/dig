@@ -12,4 +12,4 @@ dirt_yield = 0.0
 money_yield = 1.5
 min_depth = 8
 max_depth = 99999
-weight = 1.5
+weight = 2.0

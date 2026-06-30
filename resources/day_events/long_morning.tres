@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DayEvent" load_steps=2 format=3 uid="uid://dig0event0longmorning"]
+
+[ext_resource type="Script" path="res://scripts/day_event.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"long_morning"
+title = "Still Air"
+description = "No wind. No reason to hurry. The light holds longer than it should."
+category = 2
+weight = 0.8
+money_mult = 1.0
+ore_weight_mult = 1.0
+crumble_chance = -1.0
+day_length_mult = 1.25
+no_dig = false

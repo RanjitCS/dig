@@ -23,6 +23,7 @@ func _ready() -> void:
 	fast_button.pressed.connect(_on_fast)
 	skip_button.pressed.connect(_on_skip)
 	GameState.cutscene_triggered.connect(_on_cutscene_triggered)
+	GameState.day_event_started.connect(_on_day_event_started)
 	# Now that we're listening, ask GameState to fire any pending cutscene
 	# (Day 1 on first launch, etc.). Deferred so other scene-tree nodes
 	# also get a chance to connect first.
@@ -36,8 +37,19 @@ func is_active() -> bool:
 
 func _on_cutscene_triggered(scene: Cutscene) -> void:
 	print("[cutscene-modal] received: ", scene.id, " title='", scene.title, "'")
-	title_label.text = scene.title
-	_full_body = scene.body
+	title_label.remove_theme_color_override("font_color")
+	_present(scene.title, scene.body)
+
+# Special-day announce reuses the same typewriter modal, with the title tinted by
+# the event's category so good/risky/cozy/tough days read differently at a glance.
+func _on_day_event_started(event: DayEvent) -> void:
+	print("[cutscene-modal] day event: ", event.id, " title='", event.title, "'")
+	title_label.add_theme_color_override("font_color", event.category_color())
+	_present(event.title, event.description)
+
+func _present(title: String, body: String) -> void:
+	title_label.text = title
+	_full_body = body
 	body_label.text = _full_body
 	body_label.visible_characters = 0
 	_revealed_chars = 0.0

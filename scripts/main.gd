@@ -135,11 +135,12 @@ func _on_day_started(day: int) -> void:
 	_refresh_sell_button()
 
 func _on_phase_changed(p: int) -> void:
-	# Hide the day timer + dig-related labels while in the house.
+	# Hide the day timer while in the house.
 	var digging: bool = p == GameState.Phase.DIGGING
 	time_bar.visible = digging
 	time_left_label.visible = digging
-	depth_label.visible = digging
+	# Depth now lives on the shaft walls in-world, not the top bar.
+	depth_label.visible = false
 	if not digging:
 		# Reset depth/danger feedback so it doesn't linger into the house/end-of-day.
 		_live_depth = 0

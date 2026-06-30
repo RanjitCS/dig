@@ -34,17 +34,17 @@ color = Color(0.06, 0.05, 0.04, 1)
 mouse_filter = 2
 
 [node name="DigStripMarker" type="ColorRect" parent="Surface"]
-offset_left = 576.0
+offset_left = 624.0
 offset_top = -12.0
-offset_right = 960.0
+offset_right = 816.0
 offset_bottom = 0.0
 color = Color(0.35, 0.25, 0.15, 1)
 mouse_filter = 2
 
 [node name="DigStripLabel" type="Label" parent="Surface"]
-offset_left = 576.0
+offset_left = 624.0
 offset_top = -36.0
-offset_right = 960.0
+offset_right = 816.0
 offset_bottom = -16.0
 text = "dig here"
 horizontal_alignment = 1
@@ -104,5 +104,6 @@ position = Vector2(456, 0)
 position = Vector2(1140, -40)
 
 [node name="Camera2D" type="Camera2D" parent="Player"]
+zoom = Vector2(1.6, 1.6)
 position_smoothing_enabled = true
 position_smoothing_speed = 6.0

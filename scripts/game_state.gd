@@ -14,7 +14,7 @@ const DIRT_PRICE_PER_UNIT: float = 0.10
 const AUTOSAVE_INTERVAL_SEC: float = 10.0
 const OFFLINE_PROGRESS_CAP_SEC: float = 60.0 * 60.0 * 12.0  # 12 hours
 const BASE_DAY_LENGTH_SEC: float = 30.0
-const BASE_BACKPACK_CAPACITY: float = 30.0
+const BASE_BACKPACK_CAPACITY: float = 20.0
 
 var dirt: float = 0.0              # carried (capped at backpack_capacity with ore)
 var deposited_dirt: float = 0.0    # pile at the surface (uncapped)

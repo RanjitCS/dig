@@ -2,13 +2,22 @@ extends Node2D
 
 const BlockScene := preload("res://scenes/block.tscn")
 const GRID_COLS: int = 32
-# Layout: house on the LEFT, deposit station in the middle, dig strip on the RIGHT.
-# This matches the in-house walking direction: bedroom -> ... -> kitchen -> back door
-# exits the player on the RIGHT side of the house, then they walk RIGHT into the yard.
+# Layout: house on the LEFT, deposit station in the middle, the dig MOUTH on the
+# right of the house. The player exits the back door and digs straight DOWN through
+# a narrow neck; below the surface the diggable region flares open into a wide
+# cavern (a "bottle" shape) whose left wall reaches back UNDER the house footprint.
 const HOUSE_COL_START: int = 2
-const HOUSE_COL_END: int = 7
-const DIG_STRIP_START: int = 12  # inclusive
-const DIG_STRIP_END: int = 19    # inclusive (cols 12..19 = 8 wide)
+const HOUSE_COL_END: int = 8
+# --- Bottle profile (see _dig_span_for_row) -------------------------------
+# Neck: a narrow vertical shaft the player digs down through.
+const NECK_COL_LO: int = 13       # inclusive
+const NECK_COL_HI: int = 16       # inclusive (4 wide)
+const NECK_ROWS: int = 4          # rows 1..4 stay neck-width
+# Cavern body: the wide chamber below. Left wall (col 4) sits under the house
+# (cols 2..8); right wall col 16. 13 cols wide.
+const BODY_COL_LO: int = 4        # inclusive
+const BODY_COL_HI: int = 16       # inclusive (13 wide)
+const SHOULDER_ROWS: int = 6      # rows NECK_ROWS+1 .. +SHOULDER_ROWS flare open
 const ROWS_AHEAD: int = 30
 const BLOCK_DIR: String = "res://resources/blocks/"
 const BLOCK_SIZE: Vector2 = Vector2(48, 48)
@@ -97,10 +106,11 @@ func _regenerate_world() -> void:
 	_spawn_player_at_surface()
 
 func _spawn_player_at_surface() -> void:
-	# House is on the LEFT; spawn just to the right of its right edge so the
-	# player has stepped out the back door and faces the yard.
-	var door_x := float(HOUSE_COL_END + 1) * BLOCK_SIZE.x + BLOCK_SIZE.x * 0.5
-	player.reset_to(Vector2(door_x, -24))
+	# Spawn standing on the surface directly over the neck, so digging straight
+	# down drops the player into the bottle. (House is to the left; the neck is
+	# the mouth of the shaft just past the back yard.)
+	var neck_center_x := (float(NECK_COL_LO + NECK_COL_HI) + 1.0) * 0.5 * BLOCK_SIZE.x
+	player.reset_to(Vector2(neck_center_x, -24))
 
 func _on_day_started(day: int) -> void:
 	# Day 1 = initial _ready() handles spawn; subsequent days regenerate the grid.
@@ -129,15 +139,42 @@ func _load_block_types() -> void:
 		file = dir.get_next()
 	dir.list_dir_end()
 
+# Strata signage: name + the row depth where the layer begins. Painted on the
+# bedrock wall just left of the dig strip as the player descends past each one.
+# Plain names for now (flavor pass later).
+const LAYER_MARKERS := [
+	{"depth": 1, "name": "Topsoil"},
+	{"depth": 2, "name": "Dirt"},
+	{"depth": 5, "name": "Stone Layer"},
+	{"depth": 8, "name": "Coal Seam"},
+	{"depth": 20, "name": "Iron Vein"},
+	{"depth": 40, "name": "Gem Depths"},
+]
+
 func _generate_rows(count: int) -> void:
 	for i in count:
 		_generate_row(generated_rows + 1)
+		_maybe_place_layer_marker(generated_rows + 1)
 		generated_rows += 1
 
+# Inclusive [lo, hi] range of diggable columns at a given depth row. Outside this
+# span is bedrock. The profile is a bottle: a narrow neck near the surface that
+# flares open into a wide cavern below.
+func _dig_span_for_row(row: int) -> Vector2i:
+	if row <= NECK_ROWS:
+		return Vector2i(NECK_COL_LO, NECK_COL_HI)
+	if row <= NECK_ROWS + SHOULDER_ROWS:
+		var t := float(row - NECK_ROWS) / float(SHOULDER_ROWS)  # 0..1 across shoulder
+		var lo := int(round(lerp(float(NECK_COL_LO), float(BODY_COL_LO), t)))
+		var hi := int(round(lerp(float(NECK_COL_HI), float(BODY_COL_HI), t)))
+		return Vector2i(lo, hi)
+	return Vector2i(BODY_COL_LO, BODY_COL_HI)
+
 func _generate_row(row: int) -> void:
+	var span := _dig_span_for_row(row)
 	for col in GRID_COLS:
 		var type: BlockType = null
-		if col >= DIG_STRIP_START and col <= DIG_STRIP_END:
+		if col >= span.x and col <= span.y:
 			type = _pick_block_type_for_depth(row)
 		else:
 			type = bedrock_type
@@ -153,6 +190,27 @@ func _generate_row(row: int) -> void:
 		block.click_requested.connect(_on_block_click_requested)
 		block.broken.connect(_on_block_broken)
 		blocks_by_pos[Vector2i(col, row)] = block
+
+func _maybe_place_layer_marker(row: int) -> void:
+	for m in LAYER_MARKERS:
+		if int(m["depth"]) != row:
+			continue
+		var label := Label.new()
+		label.text = "%s\n%dm" % [m["name"], row]
+		label.add_theme_font_size_override("font_size", 13)
+		label.add_theme_color_override("font_color", Color(0.85, 0.82, 0.72, 0.9))
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		# Sit on the bedrock wall just left of the diggable span at this row's depth.
+		var span := _dig_span_for_row(row)
+		var wall_right_x := float(span.x) * BLOCK_SIZE.x
+		label.position = Vector2(
+			wall_right_x - 140.0,
+			(row - 1) * BLOCK_SIZE.y + BLOCK_SIZE.y * 0.5 - 14.0
+		)
+		label.size = Vector2(132, 28)
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		grid_root.add_child(label)
 
 # Player digs their own entry now; no pre-broken gap.
 

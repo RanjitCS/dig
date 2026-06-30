@@ -9,11 +9,11 @@
 [resource]
 script = ExtResource("1_block")
 id = &"dirt"
-display_name = "Dirt"
+display_name = "Loose Dirt"
 color = Color(0.33, 0.23, 0.13, 1)
 textures = [ExtResource("2_var0"), ExtResource("3_var1"), ExtResource("4_var2"), ExtResource("5_var3")]
 hits_to_break = 8
-dirt_yield = 1.0
+dirt_yield = 0.0
 money_yield = 0.0
 min_depth = 2
 max_depth = 99999

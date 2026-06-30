@@ -30,6 +30,7 @@ const SURFACE_HEIGHT_PX: float = 96.0
 
 var block_types: Array[BlockType] = []
 var bedrock_type: BlockType
+var _unstable_type: BlockType  # cached for ore-pocket framing
 var rng := RandomNumberGenerator.new()
 var generated_rows: int = 0
 var blocks_by_pos: Dictionary = {}  # Vector2i -> DigBlock
@@ -101,6 +102,7 @@ func _regenerate_world() -> void:
 		child.queue_free()
 	blocks_by_pos.clear()
 	broken_cells.clear()
+	_falling.clear()
 	generated_rows = 0
 	_generate_rows(ROWS_AHEAD)
 	_spawn_player_at_surface()
@@ -122,6 +124,7 @@ func _on_day_started(day: int) -> void:
 func _load_block_types() -> void:
 	block_types.clear()
 	bedrock_type = null
+	_unstable_type = null
 	var dir := DirAccess.open(BLOCK_DIR)
 	if dir == null:
 		push_error("Could not open " + BLOCK_DIR)
@@ -136,6 +139,8 @@ func _load_block_types() -> void:
 					bedrock_type = res
 				else:
 					block_types.append(res)
+					if res.unstable and _unstable_type == null:
+						_unstable_type = res
 		file = dir.get_next()
 	dir.list_dir_end()
 
@@ -144,7 +149,7 @@ func _load_block_types() -> void:
 # Plain names for now (flavor pass later).
 const LAYER_MARKERS := [
 	{"depth": 1, "name": "Topsoil"},
-	{"depth": 2, "name": "Dirt"},
+	{"depth": 2, "name": "Soil & Clay"},
 	{"depth": 5, "name": "Stone Layer"},
 	{"depth": 8, "name": "Coal Seam"},
 	{"depth": 20, "name": "Iron Vein"},
@@ -172,10 +177,18 @@ func _dig_span_for_row(row: int) -> Vector2i:
 
 func _generate_row(row: int) -> void:
 	var span := _dig_span_for_row(row)
+	# First decide each cell's type, so we can post-process clusters before
+	# spawning (e.g. wrap a rich pocket in loose rock so reward sits behind risk).
+	var row_types: Dictionary = {}  # col -> BlockType
+	for col in range(span.x, span.y + 1):
+		var t := _pick_block_type_for_depth(row)
+		if t != null:
+			row_types[col] = t
+	_frame_ore_pockets(row_types, span)
 	for col in GRID_COLS:
 		var type: BlockType = null
 		if col >= span.x and col <= span.y:
-			type = _pick_block_type_for_depth(row)
+			type = row_types.get(col, null)
 		else:
 			type = bedrock_type
 		if type == null:
@@ -191,6 +204,28 @@ func _generate_row(row: int) -> void:
 		block.broken.connect(_on_block_broken)
 		blocks_by_pos[Vector2i(col, row)] = block
 
+# A rich pocket should sit behind the cave-in risk: any ore_pocket cell gets its
+# horizontal neighbours (within the span) turned into loose rock, so you can't
+# reach the payoff without disturbing unstable ground.
+func _frame_ore_pockets(row_types: Dictionary, span: Vector2i) -> void:
+	if _unstable_type == null:
+		return
+	var pocket_cols: Array = []
+	for col in row_types.keys():
+		var t: BlockType = row_types[col]
+		if t != null and t.is_ore_pocket:
+			pocket_cols.append(col)
+	for col in pocket_cols:
+		for dx in [-1, 1]:
+			var n: int = col + dx
+			if n < span.x or n > span.y:
+				continue
+			var existing: BlockType = row_types.get(n, null)
+			# Don't overwrite another pocket or already-loose rock; leave ore/gems too.
+			if existing != null and (existing.is_ore_pocket or existing.unstable or existing.money_yield > 0.0):
+				continue
+			row_types[n] = _unstable_type
+
 func _maybe_place_layer_marker(row: int) -> void:
 	for m in LAYER_MARKERS:
 		if int(m["depth"]) != row:
@@ -199,13 +234,15 @@ func _maybe_place_layer_marker(row: int) -> void:
 		label.text = "%s\n%dm" % [m["name"], row]
 		label.add_theme_font_size_override("font_size", 13)
 		label.add_theme_color_override("font_color", Color(0.85, 0.82, 0.72, 0.9))
-		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		# Sit on the bedrock wall just left of the diggable span at this row's depth.
-		var span := _dig_span_for_row(row)
-		var wall_right_x := float(span.x) * BLOCK_SIZE.x
+		# Painted on the bedrock just RIGHT of the cavern's right wall. That wall is
+		# stable at every depth (neck and body share BODY_COL_HI), so the markers
+		# form one tidy vertical column the player passes as they descend — unlike
+		# the left wall, which flares far out under the house.
+		var wall_right_x := float(BODY_COL_HI + 1) * BLOCK_SIZE.x
 		label.position = Vector2(
-			wall_right_x - 140.0,
+			wall_right_x + 8.0,
 			(row - 1) * BLOCK_SIZE.y + BLOCK_SIZE.y * 0.5 - 14.0
 		)
 		label.size = Vector2(132, 28)
@@ -348,16 +385,91 @@ func _nudge_block(block: DigBlock) -> void:
 # --- Block lifecycle -------------------------------------------------------
 
 func _remove_block(block: DigBlock, award_yields: bool) -> void:
-	broken_cells[block.grid_pos] = true
-	blocks_by_pos.erase(block.grid_pos)
+	var pos := block.grid_pos
+	broken_cells[pos] = true
+	blocks_by_pos.erase(pos)
 	if award_yields:
 		_award_yields_for(block.block_type)
-	_maybe_extend_world(block.grid_pos.y)
+	_maybe_extend_world(pos.y)
 	block.queue_free()
+	# A freshly-emptied cell may leave loose rock above it unsupported.
+	_settle_unstable_above(pos)
 
 func _on_block_broken(block: DigBlock) -> void:
 	print("block broken: pos=%s type=%s" % [str(block.grid_pos), str(block.block_type.id)])
 	_remove_block(block, true)
+
+# --- Cave-ins (unstable rock) ----------------------------------------------
+# Logical (grid-based) gravity, NOT physics: we keep blocks_by_pos / broken_cells
+# authoritative and just animate the slide. A loose block sitting directly above
+# a newly-empty cell shudders, then falls to the lowest empty cell beneath it,
+# re-blocking the shaft. The cell it vacates can in turn drop more loose rock
+# above it (cascade). Never damages the player — the cost is the re-dig time.
+
+# Grid positions currently mid-fall, so we don't double-trigger them.
+var _falling: Dictionary = {}
+
+# Rough seconds per cell of fall + the telegraph beat before a block lets go.
+const CAVEIN_TELEGRAPH_SEC: float = 0.18
+const CAVEIN_FALL_SEC_PER_CELL: float = 0.07
+
+# Is this cell solid enough to stop a falling block / count as support?
+# Bedrock, normal blocks, the world edges, and the generated floor all count.
+# Empty (broken) cells do not. A cell below the deepest generated row counts as
+# support too, so loose rock can never fall through the world frontier.
+func _cell_blocks_fall(pos: Vector2i) -> bool:
+	if pos.x < 0 or pos.x >= GRID_COLS:
+		return true                      # world edge
+	if pos.y > generated_rows:
+		return true                      # below the generated floor
+	var b: DigBlock = blocks_by_pos.get(pos, null)
+	return b != null
+
+func _settle_unstable_above(empty_pos: Vector2i) -> void:
+	var above := empty_pos + Vector2i(0, -1)
+	var b: DigBlock = blocks_by_pos.get(above, null)
+	if b == null or b.block_type == null:
+		return
+	if not b.block_type.unstable:
+		return
+	if _falling.has(above):
+		return
+	_drop_unstable_block(b, above)
+
+func _drop_unstable_block(block: DigBlock, from: Vector2i) -> void:
+	# Find the landing cell: walk down from `from` until the next cell is solid.
+	var dest := from
+	while not _cell_blocks_fall(dest + Vector2i(0, 1)):
+		dest += Vector2i(0, 1)
+	if dest == from:
+		return                            # already supported; nothing to do
+	# Re-key the grid immediately so reach/dig logic sees the new layout even
+	# while the slide animation plays.
+	_falling[from] = true
+	blocks_by_pos.erase(from)
+	broken_cells[from] = true             # the vacated cell is now open
+	block.grid_pos = dest
+	blocks_by_pos[dest] = block
+	broken_cells.erase(dest)              # the landing cell is filled again
+	_animate_fall(block, from, dest)
+
+func _animate_fall(block: DigBlock, from: Vector2i, dest: Vector2i) -> void:
+	var target_y := float(dest.y - 1) * BLOCK_SIZE.y + BLOCK_SIZE.y * 0.5
+	var cells := dest.y - from.y
+	var tw := create_tween()
+	# Telegraph: a small shudder in place before it lets go.
+	tw.tween_property(block, "position:x", block.position.x - 2.0, CAVEIN_TELEGRAPH_SEC * 0.5)
+	tw.tween_property(block, "position:x", block.position.x + 2.0, CAVEIN_TELEGRAPH_SEC * 0.5)
+	tw.tween_property(block, "position:x", block.position.x, 0.02)
+	# Then the drop, easing in like a real fall.
+	tw.tween_property(block, "position:y", target_y, CAVEIN_FALL_SEC_PER_CELL * float(cells)) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.tween_callback(_on_fall_landed.bind(from, dest))
+
+func _on_fall_landed(from: Vector2i, dest: Vector2i) -> void:
+	_falling.erase(from)
+	# The cell the block left is now empty — loose rock above it may drop too.
+	_settle_unstable_above(from)
 
 func _award_yields_for(type: BlockType) -> void:
 	var crit_chance := GameState._sum_effect(Upgrade.Effect.CRIT_CHANCE)

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="BlockType" load_steps=2 format=3 uid="uid://dig0block0orepocket"]
+
+[ext_resource type="Script" path="res://scripts/block_type.gd" id="1_block"]
+
+[resource]
+script = ExtResource("1_block")
+id = &"ore_pocket"
+display_name = "Rich Pocket"
+color = Color(0.85, 0.62, 0.18, 1)
+hits_to_break = 16
+dirt_yield = 0.0
+money_yield = 4.0
+min_depth = 8
+max_depth = 99999
+weight = 0.3
+is_ore_pocket = true

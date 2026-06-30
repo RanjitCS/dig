@@ -56,17 +56,24 @@ Goal: ~60-120 in-game days in the backyard before City unlock. Each upgrade shou
 - Day length: stays **30s** base (upgrades extend it)
 
 ### Block values
-| Block | HP (was→now) | yield | depth | weight |
+| Block | HP | yield | depth | weight |
 |---|---|---|---|---|
-| topsoil | 3→**4** | 1 dirt | 1 | 10 |
-| dirt | 6→**8** | 1 dirt | 2 | 10 |
-| stone | 10→**14** | 2 dirt | 5 | 4 |
-| coal | 12→**18** | **$1.5** (was $8) | 8 | 1.5 |
-| iron | 20→**30** | **$5** (was $50) | 20 | 0.8 |
-| gem | 36→**50** | **$18** (was $500) | 40 | 0.2 |
+| topsoil | 4 | 1 dirt | 1 (surface only) | 10 |
+| **loose dirt** (was "dirt") | 8 | **0** (worthless overburden) | 2+ | 10 |
+| **clay** (NEW) | 9 | **2 dirt** (the sellable earth) | 2+ | 2.5 |
+| stone | 14 | 2 dirt | 5+ | 4 |
+| **hard rock** (NEW) | 28 | 2 dirt | 5+ | 2.0 |
+| **unstable rock** (NEW, hazard) | 10 | 1 dirt | 6+ | 1.5 |
+| coal | 18 | **$1.5** | 8+ | 1.5 |
+| **ore pocket** (NEW, reward) | 16 | **$4** | 8+ | 0.3 |
+| iron | 30 | **$5** | 20+ | 0.8 |
+| gem | 50 | **$18** | 40+ | 0.2 |
 | dirt price | — | **$0.10/unit** (unchanged) | — | — |
 
-Ore ramp: coal $1.5 → iron $5 (3.3×) → gem $18 (3.6×). Coal is now 15× a dirt unit (was 80×).
+Ore ramp: coal $1.5 → ore pocket $4 → iron $5 → gem $18. Coal is now 15× a dirt unit (was 80×).
+
+### Dirt-tier split (2026-06-30)
+Not every block pays anymore. **Loose dirt is worthless ($0)** — pure overburden you dig through. The sellable "dirt" resource now comes from **clay** pockets (2 dirt/block, weight 2.5 ≈ ~18% of shallow blocks). This makes even the dirt-only early game a *search*, not a guaranteed payout, and roughly halves early income (sim: shallow day ~$0.73 vs old ~$1.50). Topsoil (surface row only) still gives 1 dirt as a small day-1 bonus. The deposit-pile / $0.10-per-unit plumbing is unchanged — the pile just fills slower (clay + topsoil feed it; everything else gives 0).
 
 ### Projected House pace
 - dirt-only day ≈ **$1.50**; all-coal day ≈ **$9**

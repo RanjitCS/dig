@@ -16,6 +16,15 @@ extends Resource
 @export var weight: float = 1.0
 @export var indestructible: bool = false
 
+# --- Hazard behaviour ------------------------------------------------------
+# A loose block: when the cell directly beneath it becomes empty, it shudders
+# briefly then falls until it lands on something solid, re-blocking the shaft.
+# Cascades if loose blocks stack. Never damages the player (time-cost only).
+@export var unstable: bool = false
+# Rich reward pocket. Spawned in small clusters, biased next to unstable rock so
+# the payoff sits behind the cave-in risk. Purely a tagging flag for generation.
+@export var is_ore_pocket: bool = false
+
 # Returns a texture to display: a random variant if any, else the single
 # texture, else null (caller draws the colored rect fallback).
 func pick_texture() -> Texture2D:

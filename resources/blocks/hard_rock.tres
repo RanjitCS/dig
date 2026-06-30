@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BlockType" load_steps=2 format=3 uid="uid://dig0block0hardrock"]
+
+[ext_resource type="Script" path="res://scripts/block_type.gd" id="1_block"]
+
+[resource]
+script = ExtResource("1_block")
+id = &"hard_rock"
+display_name = "Dense Rock"
+color = Color(0.28, 0.29, 0.32, 1)
+hits_to_break = 28
+dirt_yield = 2.0
+money_yield = 0.0
+min_depth = 5
+max_depth = 99999
+weight = 2.0

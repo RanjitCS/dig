@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=2 format=3 uid="uid://dig0upgrade0rocketboots"]
+
+[ext_resource type="Script" path="res://scripts/upgrade.gd" id="1_upgrade"]
+
+[resource]
+script = ExtResource("1_upgrade")
+id = &"rocket_boots"
+display_name = "Spring Boots"
+flavor = "Dad rigged a pair of old work boots with truck springs. You clear the lip of the hole now without thinking about it."
+category = 0
+effect = 7
+effect_per_level = 60.0
+base_cost = 40.0
+cost_mult = 1.55
+cost_currency = &"money"
+unlock_money = 20.0
+reach = 0
+is_equippable = false
+max_level = 3

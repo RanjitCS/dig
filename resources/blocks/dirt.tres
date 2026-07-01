@@ -1,10 +1,10 @@
 [gd_resource type="Resource" script_class="BlockType" load_steps=6 format=3 uid="uid://dig0block0dirt"]
 
 [ext_resource type="Script" path="res://scripts/block_type.gd" id="1_block"]
-[ext_resource type="Texture2D" path="res://resources/blocks/a_dirt_001.png" id="2_var0"]
-[ext_resource type="Texture2D" path="res://resources/blocks/a_dirt_002.png" id="3_var1"]
-[ext_resource type="Texture2D" path="res://resources/blocks/a_dirt_003.png" id="4_var2"]
-[ext_resource type="Texture2D" path="res://resources/blocks/a_dirt_004.png" id="5_var3"]
+[ext_resource type="Texture2D" path="res://resources/blocks/a_dirt_new_001.png" id="2_var0"]
+[ext_resource type="Texture2D" path="res://resources/blocks/a_dirt_new_002.png" id="3_var1"]
+[ext_resource type="Texture2D" path="res://resources/blocks/a_dirt_new_003.png" id="4_var2"]
+[ext_resource type="Texture2D" path="res://resources/blocks/a_dirt_new_004.png" id="5_var3"]
 
 [resource]
 script = ExtResource("1_block")

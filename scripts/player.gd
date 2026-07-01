@@ -8,7 +8,7 @@ const SIZE: Vector2 = Vector2(36, 44)
 @export var ground_decel: float = 3000.0      # px/s^2 (stops on a dime)
 @export var air_accel: float = 1400.0
 @export var air_decel: float = 800.0
-@export var jump_velocity: float = -460.0
+@export var jump_velocity: float = -520.0  # base; rocket-boots upgrade adds to this
 @export var gravity: float = 1200.0
 @export var max_fall_speed: float = 900.0
 @export var coyote_time: float = 0.10
@@ -73,7 +73,7 @@ func _physics_process(delta: float) -> void:
 
 	# --- jump ---
 	if _jump_buffer_timer > 0.0 and _coyote_timer > 0.0:
-		velocity.y = jump_velocity
+		velocity.y = _jump_speed()
 		_jump_buffer_timer = 0.0
 		_coyote_timer = 0.0
 
@@ -100,6 +100,12 @@ func _tool_damage(tool: Upgrade) -> int:
 	if tool == null:
 		return 1
 	return tool.damage_at(_tool_level(tool))
+
+# Jump speed = base + any rocket-boots bonus. Both are "upward", and upward is
+# negative in Godot 2D, so a positive bonus is subtracted to jump higher.
+func _jump_speed() -> float:
+	var bonus := GameState._sum_effect(Upgrade.Effect.JUMP_VELOCITY_BONUS)
+	return jump_velocity - bonus
 
 func _tool_cooldown(tool: Upgrade) -> float:
 	var base := 0.20 if tool == null else tool.cooldown_at(_tool_level(tool))

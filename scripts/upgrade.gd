@@ -9,6 +9,7 @@ enum Effect {
 	AUTO_MONEY_PER_SEC,
 	DAY_LENGTH_SEC,
 	BACKPACK_CAPACITY,
+	JUMP_VELOCITY_BONUS,  # extra upward jump speed (px/s) per level; e.g. rocket boots
 }
 
 enum Reach {

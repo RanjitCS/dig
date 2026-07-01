@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://dig0room0kitchen"]
+[gd_scene load_steps=6 format=3 uid="uid://dig0room0kitchen"]
 
 [ext_resource type="Script" path="res://scripts/room.gd" id="1_room"]
 [ext_resource type="PackedScene" uid="uid://dig0scene0player" path="res://scenes/player.tscn" id="2_player"]
@@ -6,6 +6,9 @@
 
 [sub_resource type="RectangleShape2D" id="FloorShape"]
 size = Vector2(1800, 16)
+
+[sub_resource type="RectangleShape2D" id="WallShape"]
+size = Vector2(16, 480)
 
 [node name="Kitchen" type="Node2D"]
 script = ExtResource("1_room")
@@ -42,6 +45,18 @@ position = Vector2(800, 0)
 [node name="FloorShape" type="CollisionShape2D" parent="Floor"]
 shape = SubResource("FloorShape")
 
+[node name="LeftWall" type="StaticBody2D" parent="."]
+position = Vector2(0, -220)
+
+[node name="LeftWallShape" type="CollisionShape2D" parent="LeftWall"]
+shape = SubResource("WallShape")
+
+[node name="RightWall" type="StaticBody2D" parent="."]
+position = Vector2(1600, -220)
+
+[node name="RightWallShape" type="CollisionShape2D" parent="RightWall"]
+shape = SubResource("WallShape")
+
 [node name="RoomLabel" type="Label" parent="."]
 offset_left = 700.0
 offset_top = -380.0
@@ -51,6 +66,48 @@ text = "Kitchen"
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0.85, 0.78, 0.72, 1)
+mouse_filter = 2
+
+[node name="Furniture" type="Node2D" parent="."]
+
+[node name="Counter" type="ColorRect" parent="Furniture"]
+offset_left = 340.0
+offset_top = -72.0
+offset_right = 720.0
+offset_bottom = -8.0
+color = Color(0.5, 0.42, 0.34, 1)
+mouse_filter = 2
+
+[node name="CounterTop" type="ColorRect" parent="Furniture"]
+offset_left = 332.0
+offset_top = -80.0
+offset_right = 728.0
+offset_bottom = -70.0
+color = Color(0.62, 0.55, 0.46, 1)
+mouse_filter = 2
+
+[node name="Table" type="ColorRect" parent="Furniture"]
+offset_left = 1000.0
+offset_top = -60.0
+offset_right = 1240.0
+offset_bottom = -52.0
+color = Color(0.52, 0.38, 0.28, 1)
+mouse_filter = 2
+
+[node name="TableLegL" type="ColorRect" parent="Furniture"]
+offset_left = 1012.0
+offset_top = -52.0
+offset_right = 1024.0
+offset_bottom = -8.0
+color = Color(0.42, 0.3, 0.22, 1)
+mouse_filter = 2
+
+[node name="TableLegR" type="ColorRect" parent="Furniture"]
+offset_left = 1216.0
+offset_top = -52.0
+offset_right = 1228.0
+offset_bottom = -8.0
+color = Color(0.42, 0.3, 0.22, 1)
 mouse_filter = 2
 
 [node name="DoorToLiving" parent="." instance=ExtResource("3_door")]

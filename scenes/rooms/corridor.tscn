@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://dig0room0corridor"]
+[gd_scene load_steps=6 format=3 uid="uid://dig0room0corridor"]
 
 [ext_resource type="Script" path="res://scripts/room.gd" id="1_room"]
 [ext_resource type="PackedScene" uid="uid://dig0scene0player" path="res://scenes/player.tscn" id="2_player"]
@@ -6,6 +6,9 @@
 
 [sub_resource type="RectangleShape2D" id="FloorShape"]
 size = Vector2(2000, 16)
+
+[sub_resource type="RectangleShape2D" id="WallShape"]
+size = Vector2(16, 480)
 
 [node name="Corridor" type="Node2D"]
 script = ExtResource("1_room")
@@ -42,6 +45,18 @@ position = Vector2(900, 0)
 [node name="FloorShape" type="CollisionShape2D" parent="Floor"]
 shape = SubResource("FloorShape")
 
+[node name="LeftWall" type="StaticBody2D" parent="."]
+position = Vector2(0, -220)
+
+[node name="LeftWallShape" type="CollisionShape2D" parent="LeftWall"]
+shape = SubResource("WallShape")
+
+[node name="RightWall" type="StaticBody2D" parent="."]
+position = Vector2(1800, -220)
+
+[node name="RightWallShape" type="CollisionShape2D" parent="RightWall"]
+shape = SubResource("WallShape")
+
 [node name="RoomLabel" type="Label" parent="."]
 offset_left = 800.0
 offset_top = -380.0
@@ -51,6 +66,48 @@ text = "Corridor"
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0.85, 0.78, 0.72, 1)
+mouse_filter = 2
+
+[node name="Furniture" type="Node2D" parent="."]
+
+[node name="Runner" type="ColorRect" parent="Furniture"]
+offset_left = 260.0
+offset_top = -12.0
+offset_right = 1560.0
+offset_bottom = -8.0
+color = Color(0.4, 0.26, 0.24, 1)
+mouse_filter = 2
+
+[node name="PhotoWall" type="ColorRect" parent="Furniture"]
+offset_left = 780.0
+offset_top = -300.0
+offset_right = 1020.0
+offset_bottom = -210.0
+color = Color(0.3, 0.26, 0.24, 1)
+mouse_filter = 2
+
+[node name="Photo1" type="ColorRect" parent="Furniture"]
+offset_left = 800.0
+offset_top = -290.0
+offset_right = 860.0
+offset_bottom = -230.0
+color = Color(0.55, 0.47, 0.32, 1)
+mouse_filter = 2
+
+[node name="Photo2" type="ColorRect" parent="Furniture"]
+offset_left = 890.0
+offset_top = -290.0
+offset_right = 950.0
+offset_bottom = -230.0
+color = Color(0.5, 0.44, 0.34, 1)
+mouse_filter = 2
+
+[node name="Photo3" type="ColorRect" parent="Furniture"]
+offset_left = 960.0
+offset_top = -290.0
+offset_right = 1000.0
+offset_bottom = -240.0
+color = Color(0.52, 0.45, 0.3, 1)
 mouse_filter = 2
 
 [node name="DoorToBedroom" parent="." instance=ExtResource("3_door")]

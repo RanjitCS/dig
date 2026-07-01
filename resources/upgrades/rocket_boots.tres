@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Upgrade" load_steps=2 format=3 uid="uid://dig0upgrade0rocketboots"]
+[gd_resource type="Resource" script_class="Upgrade" format=3 uid="uid://xmh4mwg2jrbs"]
 
 [ext_resource type="Script" path="res://scripts/upgrade.gd" id="1_upgrade"]
 

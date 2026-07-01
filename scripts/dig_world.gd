@@ -237,11 +237,10 @@ func _maybe_place_layer_marker(row: int) -> void:
 		label.add_theme_color_override("font_color", Color(0.85, 0.82, 0.72, 0.9))
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		# Painted on the bedrock just RIGHT of the cavern's right wall. That wall is
-		# stable at every depth (neck and body share BODY_COL_HI), so the markers
-		# form one tidy vertical column the player passes as they descend — unlike
-		# the left wall, which flares far out under the house.
-		var wall_right_x := float(BODY_COL_HI + 1) * BLOCK_SIZE.x
+		# Painted on the bedrock just RIGHT of THIS row's right wall. Using the row's
+		# own span (not the fixed body wall) keeps shallow markers like Topsoil beside
+		# the narrow neck instead of floating far out over the surface/fence (clipping).
+		var wall_right_x := float(_dig_span_for_row(row).y + 1) * BLOCK_SIZE.x
 		label.position = Vector2(
 			wall_right_x + 8.0,
 			(row - 1) * BLOCK_SIZE.y + BLOCK_SIZE.y * 0.5 - 14.0
@@ -254,6 +253,8 @@ func _maybe_place_layer_marker(row: int) -> void:
 
 func _pick_block_type_for_depth(depth: int) -> BlockType:
 	var ore_mult := _ore_weight_mult()
+	var flood_id := GameState.today_event_flood_ore_id()
+	var flood_mult := GameState.today_event_flood_ore_mult()
 	var candidates: Array = []
 	var weights: Array = []
 	var total_weight := 0.0
@@ -261,7 +262,9 @@ func _pick_block_type_for_depth(depth: int) -> BlockType:
 		if depth >= t.min_depth and depth <= t.max_depth:
 			var w: float = t.weight
 			if ore_mult != 1.0 and t.money_yield > 0.0:
-				w *= ore_mult         # rich-vein day: money-ore spawns more often
+				w *= ore_mult         # rich-vein day: all money-ore spawns more often
+			if flood_id != &"" and t.id == flood_id:
+				w *= flood_mult       # "Coal day": this one ore floods in
 			candidates.append(t)
 			weights.append(w)
 			total_weight += w

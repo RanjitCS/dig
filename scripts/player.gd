@@ -102,9 +102,13 @@ func _tool_damage(tool: Upgrade) -> int:
 	return tool.damage_at(_tool_level(tool))
 
 func _tool_cooldown(tool: Upgrade) -> float:
-	if tool == null:
-		return 0.20
-	return tool.cooldown_at(_tool_level(tool))
+	var base := 0.20 if tool == null else tool.cooldown_at(_tool_level(tool))
+	# A special day can speed up (Dad sharpened the spade) or slow down (groundwater)
+	# the swing. dig_speed_mult > 1 = faster = shorter cooldown.
+	var speed := GameState.today_event_dig_speed_mult()
+	if speed > 0.0:
+		base /= speed
+	return base
 
 # Returns true if a dig actually landed (block existed in the targeted cell(s)).
 func _try_dig(tool: Upgrade) -> bool:

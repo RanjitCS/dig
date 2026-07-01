@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DayEvent" load_steps=2 format=3 uid="uid://dig0event0heavyair"]
+
+[ext_resource type="Script" path="res://scripts/day_event.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"heavy_air"
+title = "Bad Air"
+description = "The deep air sits wrong in your chest — you can't stay down long. But there's a pocket down there worth more than a clear head."
+category = 3
+weight = 0.5
+money_mult = 2.2
+ore_weight_mult = 1.0
+crumble_chance = -1.0
+day_length_mult = 0.65
+no_dig = false

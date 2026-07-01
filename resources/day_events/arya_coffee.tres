@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="DayEvent" load_steps=2 format=3 uid="uid://dig0event0aryacoffee"]
+
+[ext_resource type="Script" path="res://scripts/day_event.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"arya_coffee"
+title = "Coffee on the Step"
+description = "A thermos by the back door. Still warm. No note — there never is. You have a while longer in you today."
+category = 2
+weight = 0.5
+money_mult = 1.0
+ore_weight_mult = 1.0
+crumble_chance = -1.0
+day_length_mult = 1.2
+no_dig = false
+morning_gift_money = 2.0
+dig_speed_mult = 1.0

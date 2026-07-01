@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DayEvent" load_steps=2 format=3 uid="uid://dig0event0groundwater"]
+
+[ext_resource type="Script" path="res://scripts/day_event.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"groundwater"
+title = "Water in the Hole"
+description = "Seepage overnight. Every swing is heavier through the mud — but the wet ground gave up a rich seam nobody had reached."
+category = 1
+weight = 0.6
+money_mult = 1.0
+ore_weight_mult = 2.2
+crumble_chance = -1.0
+day_length_mult = 1.0
+no_dig = false
+dig_speed_mult = 0.75

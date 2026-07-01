@@ -223,7 +223,7 @@ anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 8.0
 offset_top = -56.0
-offset_right = 400.0
+offset_right = 780.0
 offset_bottom = -8.0
 grow_vertical = 0
 modulate = Color(1, 1, 1, 0.85)
@@ -261,4 +261,18 @@ theme_override_font_sizes/font_size = 11
 layout_mode = 2
 focus_mode = 0
 text = "→ Dig"
+theme_override_font_sizes/font_size = 11
+
+[node name="Sep" type="VSeparator" parent="DebugPanel/Box"]
+layout_mode = 2
+
+[node name="EventPicker" type="OptionButton" parent="DebugPanel/Box"]
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 11
+
+[node name="ForceEventButton" type="Button" parent="DebugPanel/Box"]
+layout_mode = 2
+focus_mode = 0
+text = "Force Event"
 theme_override_font_sizes/font_size = 11

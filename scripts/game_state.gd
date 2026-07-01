@@ -312,6 +312,9 @@ func start_next_day() -> void:
 	# Roll the special-day event BEFORE computing day length (storm/still-air
 	# scale it) so time_left reflects today's modifier.
 	_roll_day_event()
+	# A cozy morning gift (Mom's lunch money, etc.) lands right at day start.
+	if today_event != null and today_event.morning_gift_money > 0.0:
+		_add_money(today_event.morning_gift_money)
 	time_left = day_length()
 	day_paused = false
 	# Day begins in the bedroom; player must walk out the door to begin digging.
@@ -757,10 +760,25 @@ func get_day_event(event_id: StringName) -> DayEvent:
 			return e
 	return null
 
+# Debug: force a specific event (or force "none") on the NEXT start_next_day(),
+# bypassing the random roll. Empty StringName = no override.
+var _forced_event_id: StringName = &""
+var _force_event_active: bool = false
+
+func force_next_event(event_id: StringName) -> void:
+	_forced_event_id = event_id
+	_force_event_active = true
+
 # Roll for a special day. Sets today_event (or null) and announces it. Called from
 # start_next_day(). Never fires on day 1 (that day is scripted).
 func _roll_day_event() -> void:
 	today_event = null
+	# Debug override consumes one roll: force a specific event or force none.
+	if _force_event_active:
+		_force_event_active = false
+		today_event = get_day_event(_forced_event_id) if _forced_event_id != &"" else null
+		_forced_event_id = &""
+		return
 	if current_day <= 1 or day_events.is_empty():
 		return
 	if randf() >= SPECIAL_DAY_CHANCE:
@@ -795,6 +813,17 @@ func today_event_ore_weight_mult() -> float:
 # Cave-in crumble-chance override for the day, or <0 when there's no override.
 func today_event_crumble_chance() -> float:
 	return today_event.crumble_chance if today_event != null else -1.0
+
+# Dig-speed multiplier for the day (>1 faster, <1 slower). 1.0 normally.
+func today_event_dig_speed_mult() -> float:
+	return today_event.dig_speed_mult if today_event != null else 1.0
+
+# The one ore flooded today ("" if none) and its extra weight multiplier.
+func today_event_flood_ore_id() -> StringName:
+	return today_event.flood_ore_id if today_event != null else &""
+
+func today_event_flood_ore_mult() -> float:
+	return today_event.flood_ore_mult if today_event != null else 1.0
 
 func get_helper(helper_id: StringName) -> Helper:
 	for h in helpers:

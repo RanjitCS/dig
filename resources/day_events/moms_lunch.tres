@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="DayEvent" load_steps=2 format=3 uid="uid://dig0event0momslunch"]
+
+[ext_resource type="Script" path="res://scripts/day_event.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"moms_lunch"
+title = "She Packed a Lunch"
+description = "Folded bills tucked under the sandwich. \"For a proper meal,\" the napkin says. You pocket it and don't argue."
+category = 2
+weight = 0.5
+money_mult = 1.0
+ore_weight_mult = 1.0
+crumble_chance = -1.0
+day_length_mult = 1.0
+no_dig = false
+morning_gift_money = 5.0
+dig_speed_mult = 1.0

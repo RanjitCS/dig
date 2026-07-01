@@ -6,10 +6,10 @@
 script = ExtResource("1_event")
 id = &"storm"
 title = "Weather Coming"
-description = "Sky's the colour of a bruise. You won't get a full day in before it breaks."
+description = "Sky's the colour of a bruise. Short day before it breaks — but the buyer's paying storm prices for anything you haul up."
 category = 3
-weight = 0.7
-money_mult = 1.0
+weight = 0.6
+money_mult = 2.0
 ore_weight_mult = 1.0
 crumble_chance = -1.0
 day_length_mult = 0.7

@@ -29,6 +29,18 @@ enum Category {
 # A non-dig day (cozy/flavor). The dig is skipped; the day is about the morning beat.
 @export var no_dig: bool = false
 
+# --- v2 modifiers ---------------------------------------------------------
+# Floods ONE specific ore: multiplies just that block id's spawn weight (a "Coal
+# Seam" / "Iron day"). Leave id empty to disable. Applies on top of ore_weight_mult.
+@export var flood_ore_id: StringName = &""
+@export var flood_ore_mult: float = 1.0
+# A small one-time cash gift applied at the START of the day (Mom's lunch money,
+# a bit of luck). 0 = none.
+@export var morning_gift_money: float = 0.0
+# Scales dig speed for the day by scaling the tool cooldown. >1 = faster swings
+# (Dad sharpened the spade), <1 = slower (groundwater, heavy going). 1 = normal.
+@export var dig_speed_mult: float = 1.0
+
 func category_color() -> Color:
 	match category:
 		Category.GOOD:

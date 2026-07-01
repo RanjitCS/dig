@@ -11,6 +11,26 @@ const SAVE_VERSION: int = 9
 
 # Odds that any given new day (after day 1) is a "special day". Rare on purpose.
 const SPECIAL_DAY_CHANCE: float = 1.0 / 13.0
+
+# City unlock gate: both must be met. Money = your wealth "built the city"
+# (tuned in docs/economy_pacing.md); depth = you explored the House region.
+const CITY_UNLOCK_MONEY: float = 1100.0
+const CITY_UNLOCK_DEPTH: int = 30
+const CITY_UNLOCK_CUTSCENE_ID: StringName = &"city_unlocked"
+
+# Where the family/Arya are each morning. NOT per-character random (that makes the
+# player hunt every day) — instead a small set of hand-authored, coherent "day
+# scenarios". One is picked per day (different from yesterday). Each maps a
+# character id -> room id. Absent characters are simply omitted from the scenario.
+# Grandpa is never placed (present via photos only).
+const DAY_SCENARIOS: Array = [
+	{"name": "breakfast", "people": {"mom": "kitchen", "sister": "kitchen", "dad": "workshop", "arya": "kitchen"}},
+	{"name": "quiet_morning", "people": {"mom": "living_room", "dad": "workshop", "sister": "sisters_room"}},
+	{"name": "everyone_up", "people": {"mom": "kitchen", "dad": "living_room", "sister": "sisters_room", "arya": "living_room"}},
+	{"name": "dads_day", "people": {"dad": "workshop", "mom": "kitchen", "sister": "sisters_room"}},
+	{"name": "sister_working", "people": {"sister": "sisters_room", "mom": "kitchen", "dad": "living_room"}},
+	{"name": "arya_visits", "people": {"arya": "kitchen", "mom": "kitchen", "dad": "workshop", "sister": "sisters_room"}},
+]
 const DEFAULT_ROOM: StringName = &"bedroom"
 
 enum Phase { HOUSE_INTERIOR, DIGGING, END_OF_DAY }
@@ -29,6 +49,7 @@ var ore_display_names: Dictionary = {} # StringName -> String
 var money: float = 0.0
 var total_dirt_dug: float = 0.0
 var total_money_earned: float = 0.0
+var max_depth_reached: int = 0     # deepest row ever dug to; drives region gates
 
 var upgrades: Array[Upgrade] = []
 var upgrade_levels: Dictionary = {}  # StringName -> int
@@ -46,6 +67,11 @@ var _helper_ore_accum: Dictionary = {}  # StringName ore_id -> float (fractional
 # "Special day" events. Rolled rarely at day-start; applied for the whole day.
 var day_events: Array[DayEvent] = []
 var today_event: DayEvent = null  # the active special day, or null for an ordinary day
+
+# Which day-scenario is active today (index into DAY_SCENARIOS), and the resolved
+# character->room map for quick lookup. Rolled at day start, persisted for the day.
+var today_scenario_index: int = -1
+var today_placements: Dictionary = {}  # StringName char_id -> StringName room_id
 
 # Region progression. Helpers (Arya's labor company) unlock only once the
 # village has grown into a city. Until the full region system exists this is a
@@ -89,6 +115,10 @@ signal day_started(day: int)
 signal helper_hired(helper_id: StringName, new_level: int)
 # Fired when a new day rolls a special event. The announce modal listens.
 signal day_event_started(event: DayEvent)
+# Fired once when the City region unlocks (money+depth gate met).
+signal city_unlocked_changed
+# Fired when the day's character placements are (re)rolled; rooms refresh occupants.
+signal placements_changed
 
 func _ready() -> void:
 	_load_upgrades()
@@ -98,6 +128,12 @@ func _ready() -> void:
 	_load_day_events()
 	_load_ore_prices()
 	load_game()
+	# Ensure today's household placements exist (load restores the saved scenario;
+	# a fresh game / missing scenario rolls one so day 1 is populated).
+	if today_scenario_index < 0:
+		_roll_day_scenario()
+	else:
+		_resolve_placements()
 	time_left = day_length()
 	set_process(true)
 	phase_changed.emit(phase)
@@ -108,6 +144,16 @@ func _ready() -> void:
 	# after it's set up its listener.
 
 func check_pending_cutscenes() -> void:
+	# A loaded save may already qualify for City but not have unlocked it (e.g. an
+	# older save, or the gate was met the same session it was added). Re-evaluate.
+	_check_city_unlock()
+	if _city_unlock_announce_pending:
+		_city_unlock_announce_pending = false
+		if _trigger_cutscene_by_id(CITY_UNLOCK_CUTSCENE_ID):
+			return
+	_check_pending_cutscenes_impl()
+
+func _check_pending_cutscenes_impl() -> void:
 	_check_cutscenes()
 
 func _load_ore_prices() -> void:
@@ -312,6 +358,8 @@ func start_next_day() -> void:
 	# Roll the special-day event BEFORE computing day length (storm/still-air
 	# scale it) so time_left reflects today's modifier.
 	_roll_day_event()
+	# Roll where the family/Arya are this morning.
+	_roll_day_scenario()
 	# A cozy morning gift (Mom's lunch money, etc.) lands right at day start.
 	if today_event != null and today_event.morning_gift_money > 0.0:
 		_add_money(today_event.morning_gift_money)
@@ -322,15 +370,44 @@ func start_next_day() -> void:
 	set_room(DEFAULT_ROOM, NAN)
 	day_started.emit(current_day)
 	day_tick.emit(time_left, day_length())
-	# A scripted cutscene takes priority over the special-day announce on the rare
-	# day both would fire (the modal shows one at a time).
-	var fired_cutscene := _check_cutscenes()
+	# The City-unlock announce (deferred from whenever the gate tripped mid-dig)
+	# takes top priority this morning. Otherwise a scripted cutscene, otherwise
+	# the special-day announce. The modal shows one at a time.
+	var fired_cutscene := false
+	if _city_unlock_announce_pending:
+		_city_unlock_announce_pending = false
+		fired_cutscene = _trigger_cutscene_by_id(CITY_UNLOCK_CUTSCENE_ID)
+	if not fired_cutscene:
+		fired_cutscene = _check_cutscenes()
 	if not fired_cutscene and today_event != null:
 		day_event_started.emit(today_event)
 
 func skip_to_end_of_day() -> void:
 	# Called when player presses E on the bed before going out.
 	_end_day()
+
+# Called by the dig world as the player reaches new depths. Updates the record
+# and checks whether the City gate is now met.
+func record_depth(row: int) -> void:
+	if row > max_depth_reached:
+		max_depth_reached = row
+		_check_city_unlock()
+
+# City unlocks the first time BOTH the money and depth thresholds are met.
+# The flag flips immediately, but the announce cutscene is DEFERRED to the next
+# day-start (the natural "morning" beat) so it never pops mid-dig.
+var _city_unlock_announce_pending: bool = false
+
+func _check_city_unlock() -> void:
+	if city_unlocked:
+		return
+	if total_money_earned < CITY_UNLOCK_MONEY:
+		return
+	if max_depth_reached < CITY_UNLOCK_DEPTH:
+		return
+	city_unlocked = true
+	_city_unlock_announce_pending = true
+	city_unlocked_changed.emit()
 
 # --- Public actions -------------------------------------------------------
 
@@ -374,12 +451,15 @@ func reset_game() -> void:
 	money = 0.0
 	total_dirt_dug = 0.0
 	total_money_earned = 0.0
+	max_depth_reached = 0
 	upgrade_levels.clear()
 	triggered_milestones.clear()
 	triggered_cutscenes.clear()
 	helper_levels.clear()
 	_helper_ore_accum.clear()
 	today_event = null
+	today_scenario_index = -1
+	today_placements = {}
 	city_unlocked = false
 	current_day = 1
 	day_dirt_dug = 0.0
@@ -490,6 +570,7 @@ func save_game() -> void:
 		"money": money,
 		"total_dirt_dug": total_dirt_dug,
 		"total_money_earned": total_money_earned,
+		"max_depth_reached": max_depth_reached,
 		"upgrade_levels": levels_plain,
 		"triggered_milestones": milestones_plain,
 		"triggered_cutscenes": cutscenes_plain,
@@ -502,6 +583,7 @@ func save_game() -> void:
 		"day_dirt_dug": day_dirt_dug,
 		"day_money_earned": day_money_earned,
 		"today_event_id": String(today_event.id) if today_event != null else "",
+		"today_scenario_index": today_scenario_index,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f == null:
@@ -534,6 +616,7 @@ func load_game() -> void:
 	money = float(data.get("money", 0.0))
 	total_dirt_dug = float(data.get("total_dirt_dug", 0.0))
 	total_money_earned = float(data.get("total_money_earned", 0.0))
+	max_depth_reached = int(data.get("max_depth_reached", 0))
 	upgrade_levels.clear()
 	var levels_plain: Dictionary = data.get("upgrade_levels", {})
 	for k in levels_plain.keys():
@@ -559,6 +642,7 @@ func load_game() -> void:
 	current_day = int(data.get("current_day", 1))
 	var saved_event_id := String(data.get("today_event_id", ""))
 	today_event = get_day_event(StringName(saved_event_id)) if saved_event_id != "" else null
+	today_scenario_index = int(data.get("today_scenario_index", -1))
 	time_left = float(data.get("time_left", day_length()))
 	day_dirt_dug = float(data.get("day_dirt_dug", 0.0))
 	day_money_earned = float(data.get("day_money_earned", 0.0))
@@ -615,6 +699,7 @@ func _add_money(amount: float) -> void:
 	day_money_earned += amount
 	money_changed.emit(money)
 	_check_milestones()
+	_check_city_unlock()
 
 func _ore_dict_to_plain(d: Dictionary) -> Dictionary:
 	var out: Dictionary = {}
@@ -785,6 +870,37 @@ func _roll_day_event() -> void:
 		return
 	today_event = _pick_weighted_event()
 
+# Pick today's household scenario (who's in which room). Chosen from the
+# hand-authored DAY_SCENARIOS, avoiding an immediate repeat so mornings differ.
+func _roll_day_scenario() -> void:
+	if DAY_SCENARIOS.is_empty():
+		today_scenario_index = -1
+		today_placements = {}
+		placements_changed.emit()
+		return
+	var idx: int = randi() % DAY_SCENARIOS.size()
+	if DAY_SCENARIOS.size() > 1 and idx == today_scenario_index:
+		idx = (idx + 1) % DAY_SCENARIOS.size()  # nudge off an immediate repeat
+	today_scenario_index = idx
+	_resolve_placements()
+	placements_changed.emit()
+
+func _resolve_placements() -> void:
+	today_placements = {}
+	if today_scenario_index < 0 or today_scenario_index >= DAY_SCENARIOS.size():
+		return
+	var people: Dictionary = DAY_SCENARIOS[today_scenario_index].get("people", {})
+	for char_id in people.keys():
+		today_placements[StringName(char_id)] = StringName(people[char_id])
+
+# Characters present in a given room today (array of StringName ids).
+func characters_in_room(room_id: StringName) -> Array:
+	var out: Array = []
+	for char_id in today_placements.keys():
+		if today_placements[char_id] == room_id:
+			out.append(char_id)
+	return out
+
 func _pick_weighted_event() -> DayEvent:
 	var total := 0.0
 	for e in day_events:
@@ -925,4 +1041,17 @@ func _check_cutscenes() -> bool:
 				triggered_cutscenes[c.id] = true
 			cutscene_triggered.emit(c)
 			return true
+	return false
+
+# Fire a specific cutscene by id (used by region-unlock gates, not the day/money
+# triggers). Marks it triggered and emits it through the same modal path.
+func _trigger_cutscene_by_id(cutscene_id: StringName) -> bool:
+	for c in cutscenes:
+		if c.id != cutscene_id:
+			continue
+		if c.run_once and triggered_cutscenes.get(c.id, false):
+			return false
+		triggered_cutscenes[c.id] = true
+		cutscene_triggered.emit(c)
+		return true
 	return false

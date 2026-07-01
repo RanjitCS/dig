@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="Cutscene" load_steps=2 format=3 uid="uid://dig0cutscene0city"]
+
+[ext_resource type="Script" path="res://scripts/cutscene.gd" id="1_cutscene"]
+
+[resource]
+script = ExtResource("1_cutscene")
+id = &"city_unlocked"
+title = "It Grew"
+body = "There's a crew truck parked at the end of the lane. Men in work vests, waiting.\n\nArya set it up. All the money you've been pulling out of the ground had to go somewhere — it went into the town, and the town got bigger. Big enough to need diggers.\n\n\"You can't do all of it yourself,\" the note says. \"Let them take the easy stuff. You go deep.\"\n\nThere's a hiring sheet on the porch."
+trigger = 1
+threshold = -1.0
+run_once = true

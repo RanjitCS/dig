@@ -104,6 +104,7 @@ func _on_deepest_changed(row: int) -> void:
 	if row > deepest_dug:
 		deepest_dug = row
 		_refresh_depth()
+	GameState.record_depth(row)  # feeds the region-unlock gate (max depth)
 
 # Live player depth + whether they can climb back before the day ends.
 # danger: 0 safe, 1 cutting it close, 2 probably won't make it.

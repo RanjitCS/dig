@@ -56,37 +56,41 @@ func _draw() -> void:
 		return  # texture mode handles it
 	var rng := RandomNumberGenerator.new()
 	rng.seed = _seed
-	# More, longer cracks at higher stages.
-	var crack_count: int = 2 if _stage == 1 else 4
-	var max_len: float = SIZE.x * (0.30 if _stage == 1 else 0.52)
+	# Cracks fan out from the block CENTRE toward the edges so damage reads across
+	# the whole face, not bunched in one corner. Each crack is long enough to reach
+	# most of the way to the edge (half-diagonal ~= 34px at 48).
+	var crack_count: int = 3 if _stage == 1 else 5
+	var reach: float = SIZE.x * (0.55 if _stage == 1 else 0.72)
 	var width: float = 1.5 if _stage == 1 else 2.5
-	# Cracks radiate from a shared origin near the centre for a "impact" look.
-	var origin := Vector2(
-		rng.randf_range(-6.0, 6.0),
-		rng.randf_range(-6.0, 6.0)
-	)
+	# Origin is the centre with only a hair of jitter, keeping the fan balanced.
+	var origin := Vector2(rng.randf_range(-2.0, 2.0), rng.randf_range(-2.0, 2.0))
+	# Evenly space the base angles around the circle (+ jitter) so the cracks point
+	# in different directions and cover all quadrants.
+	var base := rng.randf_range(0.0, TAU)
+	var step := TAU / float(crack_count)
 	for i in crack_count:
-		var ang := rng.randf_range(0.0, TAU)
-		_draw_crack(rng, origin, ang, max_len, width)
+		var ang := base + step * float(i) + rng.randf_range(-0.35, 0.35)
+		var length := reach * rng.randf_range(0.8, 1.0)
+		_draw_crack(rng, origin, ang, length, width)
 
 func _draw_crack(rng: RandomNumberGenerator, start: Vector2, angle: float, length: float, width: float) -> void:
-	# A jagged polyline of a few segments, wandering off the base angle.
+	# A jagged polyline that walks outward from the centre toward an edge.
 	var pts: PackedVector2Array = [start]
 	var pos := start
-	var segs: int = rng.randi_range(2, 4)
+	var segs: int = rng.randi_range(3, 5)
 	var seg_len := length / float(segs)
 	var a := angle
 	for _i in segs:
-		a += rng.randf_range(-0.5, 0.5)
+		a += rng.randf_range(-0.4, 0.4)  # wander, but keep the outward heading
 		pos += Vector2(cos(a), sin(a)) * seg_len
-		pos.x = clampf(pos.x, -SIZE.x * 0.5 + 2.0, SIZE.x * 0.5 - 2.0)
-		pos.y = clampf(pos.y, -SIZE.y * 0.5 + 2.0, SIZE.y * 0.5 - 2.0)
+		pos.x = clampf(pos.x, -SIZE.x * 0.5 + 1.0, SIZE.x * 0.5 - 1.0)
+		pos.y = clampf(pos.y, -SIZE.y * 0.5 + 1.0, SIZE.y * 0.5 - 1.0)
 		pts.append(pos)
 	draw_polyline(pts, CRACK_COLOR, width)
-	# Heavy stage grows a small branch off the middle.
-	if _stage >= 2 and pts.size() >= 2:
+	# Heavy stage sprouts a branch partway along for a shattered look.
+	if _stage >= 2 and pts.size() >= 3:
 		var mid := pts[pts.size() / 2]
-		var branch := mid + Vector2(cos(a + 1.2), sin(a + 1.2)) * (seg_len * 0.8)
-		branch.x = clampf(branch.x, -SIZE.x * 0.5 + 2.0, SIZE.x * 0.5 - 2.0)
-		branch.y = clampf(branch.y, -SIZE.y * 0.5 + 2.0, SIZE.y * 0.5 - 2.0)
+		var branch := mid + Vector2(cos(a + 1.1), sin(a + 1.1)) * (seg_len * 1.1)
+		branch.x = clampf(branch.x, -SIZE.x * 0.5 + 1.0, SIZE.x * 0.5 - 1.0)
+		branch.y = clampf(branch.y, -SIZE.y * 0.5 + 1.0, SIZE.y * 0.5 - 1.0)
 		draw_line(mid, branch, CRACK_COLOR, width * 0.7)

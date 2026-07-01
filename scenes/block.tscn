@@ -1,6 +1,7 @@
-[gd_scene load_steps=4 format=3 uid="uid://dig0scene0block"]
+[gd_scene load_steps=5 format=3 uid="uid://dig0scene0block"]
 
 [ext_resource type="Script" path="res://scripts/block.gd" id="1_block"]
+[ext_resource type="Script" path="res://scripts/crack_overlay.gd" id="2_crack"]
 
 [sub_resource type="RectangleShape2D" id="RectShape"]
 size = Vector2(48, 48)
@@ -20,6 +21,13 @@ color = Color(0.4, 0.3, 0.2, 1)
 mouse_filter = 2
 
 [node name="Sprite" type="Sprite2D" parent="."]
+visible = false
+centered = true
+
+[node name="CrackOverlay" type="Node2D" parent="."]
+script = ExtResource("2_crack")
+
+[node name="Sprite" type="Sprite2D" parent="CrackOverlay"]
 visible = false
 centered = true
 

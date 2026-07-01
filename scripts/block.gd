@@ -56,15 +56,14 @@ func _apply_visuals() -> void:
 	if _chosen_texture != null:
 		sprite.texture = _chosen_texture
 		sprite.centered = true
-		# Scale the texture to fill the cell, plus a tiny overlap so neighbouring
-		# blocks butt together with no hairline gap between them. ~1px at 48.
+		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		# Scale the texture to fill the cell. Use the EXACT ratio with no overlap
+		# fudge: a clean integer scale (16->48 = 3.0x) keeps every source pixel the
+		# same size on screen so the tile stays crisp. The old 1.04 "seam bleed"
+		# made the scale fractional (3.12x), which smears pixels under Nearest.
 		var tex_size: Vector2 = _chosen_texture.get_size()
 		if tex_size.x > 0.0 and tex_size.y > 0.0:
-			var overlap := 1.04  # ~2px total bleed; hides sub-pixel seams
-			sprite.scale = Vector2(
-				(SIZE.x / tex_size.x) * overlap,
-				(SIZE.y / tex_size.y) * overlap
-			)
+			sprite.scale = Vector2(SIZE.x / tex_size.x, SIZE.y / tex_size.y)
 		sprite.visible = true
 		fallback_rect.visible = false
 	else:

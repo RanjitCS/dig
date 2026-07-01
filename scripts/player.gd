@@ -8,7 +8,7 @@ const SIZE: Vector2 = Vector2(36, 44)
 @export var ground_decel: float = 3000.0      # px/s^2 (stops on a dime)
 @export var air_accel: float = 1400.0
 @export var air_decel: float = 800.0
-@export var jump_velocity: float = -520.0  # base; rocket-boots upgrade adds to this
+@export var jump_velocity: float = -400.0  # base; clears ~1 block (apex ~67px at g=1200). Spring Boots adds to this.
 @export var gravity: float = 1200.0
 @export var max_fall_speed: float = 900.0
 @export var coyote_time: float = 0.10

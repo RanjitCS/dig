@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="DayEvent" load_steps=2 format=3 uid="uid://dig0event0momslunch"]
+[gd_resource type="Resource" script_class="DayEvent" format=3 uid="uid://bc3bykcyyhlbj"]
 
 [ext_resource type="Script" path="res://scripts/day_event.gd" id="1_event"]
 
